@@ -3,256 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการแข่งขันแบดมินตัน (16 Teams Double Elimination)</title>
+    <title>ระบบจัดการแข่งขันแบดมินตัน (Multi-Category & 16 Teams)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        /* ================= CSS ทั้งหมด ================= */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f7f6;
-            color: #333;
+            margin: 0; padding: 20px; background-color: #f4f7f6; color: #333;
         }
-        h1, h2, h3 {
-            text-align: center;
-            color: #1f4e79;
-        }
-        .main-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .banner-container {
-            width: 100%;
-            border-radius: 10px 10px 0 0;
-            overflow: hidden;
-            background: #fff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .banner-container img {
-            width: 100%;
-            display: block;
-            object-fit: cover;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
+        h1, h2, h3 { text-align: center; color: #1f4e79; }
         
-        .setup-section {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #eee;
-        }
+        .main-container { max-width: 800px; margin: 0 auto 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Dashboard Styles */
+        .cat-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; margin-left: 5px; font-size: 14px; }
+        
+        /* Setup Styles */
+        .setup-section { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
         .setup-section h3 { margin-top: 0; }
+        .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .setup-grid input, .setup-section > input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        .setup-section > input[type="text"]:focus, .setup-grid input:focus { border-color: #1f4e79; outline: none; }
         
-        .setup-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 10px;
-        }
-        .setup-grid input, .setup-section > input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        .setup-section > input[type="text"]:focus, .setup-grid input:focus {
-            border-color: #1f4e79;
-            outline: none;
-        }
-        
-        button.primary-btn {
-            background-color: #1f4e79;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s;
-            margin-bottom: 10px;
-        }
+        button.primary-btn { background-color: #1f4e79; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 100%; transition: background-color 0.3s; margin-bottom: 10px; }
         button.primary-btn:hover { background-color: #153654; }
-        
-        button.danger-btn {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 10px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
+        button.danger-btn { background-color: #d32f2f; color: white; border: none; padding: 10px; font-size: 14px; border-radius: 5px; cursor: pointer; width: 100%; }
         button.danger-btn:hover { background-color: #b71c1c; }
 
-        #bracket-screen {
-            display: none;
-            overflow-x: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
+        /* Bracket Styles */
+        #bracket-screen { display: none; overflow-x: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
+        .banner-container { width: 100%; border-radius: 10px 10px 0 0; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .banner-container img { width: 100%; display: block; object-fit: cover; }
+        .header-buttons { display: flex; gap: 10px; max-width: 600px; margin: 0 auto 20px auto; }
+        .header-buttons button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
         
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-            max-width: 600px;
-            margin: 0 auto 20px auto;
-        }
-        .header-buttons button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .bracket-wrapper {
-            position: relative;
-            width: 1850px;
-            height: 1850px;
-            margin: 0 auto;
-        }
-
-        .match-box {
-            position: absolute;
-            width: 230px;
-            height: 135px;
-            border: 2px solid #1f4e79;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            z-index: 2;
-            padding: 6px;
-            box-sizing: border-box;
-        }
-        .match-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #1f4e79;
-            color: white;
-            margin: -6px -6px 6px -6px;
-            border-radius: 6px 6px 0 0;
-            padding: 4px 8px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-        .court-badge {
-            background: #ff9800;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-        }
-        
-        .team-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        .team-name {
-            flex-grow: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 15px;
-            font-weight: bold;
-        }
-        .score-input {
-            width: 35px;
-            height: 28px;
-            margin-left: 5px;
-            text-align: center;
-            border: 1px solid #aaa;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-        }
+        .bracket-wrapper { position: relative; width: 1850px; height: 1850px; margin: 0 auto; }
+        .match-box { position: absolute; width: 230px; height: 135px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 6px; box-sizing: border-box; }
+        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -6px -6px 6px -6px; border-radius: 6px 6px 0 0; padding: 4px 8px; font-size: 13px; font-weight: bold; }
+        .court-badge { background: #ff9800; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+        .team-row { display: flex; align-items: center; margin-bottom: 6px; }
+        .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; font-weight: bold; }
+        .score-input { width: 35px; height: 28px; margin-left: 5px; text-align: center; border: 1px solid #aaa; border-radius: 4px; font-size: 14px; font-weight: bold; }
         .score-input:focus { border-color: #1f4e79; outline: none; }
         .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; }
-        
-        .tie-breaker-input {
-            border: 2px solid #ff9800;
-            background-color: #fff3e0;
-            color: #d32f2f;
-        }
-
-        .confirm-btn {
-            margin-top: auto;
-            font-size: 14px;
-            padding: 6px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-        }
+        .tie-breaker-input { border: 2px solid #ff9800; background-color: #fff3e0; color: #d32f2f; }
+        .confirm-btn { margin-top: auto; font-size: 14px; padding: 6px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .confirm-btn:hover { background: #45a049; }
-        
-        .status-text {
-            margin-top: auto;
-            font-size: 13px;
-            text-align: center;
-            color: #d32f2f;
-            font-weight: bold;
-        }
-        .edit-btn {
-            background: #ff9800;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            font-size: 11px;
-            padding: 3px 6px;
-            cursor: pointer;
-            margin-top: auto;
-        }
-
-        #lines-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-        }
-        .bracket-title {
-            position: absolute;
-            font-size: 26px;
-            font-weight: bold;
-            color: #1f4e79;
-            z-index: 2;
-        }
+        .status-text { margin-top: auto; font-size: 13px; text-align: center; color: #d32f2f; font-weight: bold; }
+        .edit-btn { background: #ff9800; color: white; border: none; border-radius: 3px; font-size: 11px; padding: 3px 6px; cursor: pointer; margin-top: auto; }
+        #lines-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .bracket-title { position: absolute; font-size: 26px; font-weight: bold; color: #1f4e79; z-index: 2; }
     </style>
 </head>
 <body>
 
-    <div class="main-container" id="main-setup-container">
-        <div class="container" id="setup-screen">
+    <!-- ================= หน้า Dashboard เลือกประเภท ================= -->
+    <div id="dashboard-view" class="main-container">
+        <h1>เลือกระบบจัดการแข่งขัน</h1>
+        <div id="cat-list"></div>
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+        <h3>สร้างประเภทการแข่งขันใหม่</h3>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="new-cat-name" placeholder="ชื่อประเภท (เช่น ชายคู่ มือ C)" style="flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+            <button class="btn" style="background: #1f4e79; padding: 10px 20px;" onclick="createNewCategory()">สร้าง</button>
+        </div>
+    </div>
+
+    <!-- ================= หน้าเข้าจัดการประเภทนั้นๆ (ซ่อนไว้ตอนแรก) ================= -->
+    <div id="category-view" style="display: none;">
+        
+        <!-- แถบ Header นำทาง -->
+        <div class="main-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;">
+            <h2 id="current-cat-title" style="margin: 0;"></h2>
+            <button class="btn" style="background:#757575;" onclick="backToDashboard()">กลับไปหน้าหลัก</button>
+        </div>
+
+        <!-- หน้าตั้งค่า (Setup) -->
+        <div class="container" id="main-setup-container" style="max-width: 800px; margin: 0 auto;">
             <h1>ตั้งค่าสายการแข่งขัน</h1>
             
             <div class="setup-section">
-                <h3>1. กำหนดประเภทการแข่งขัน</h3>
+                <h3>1. ระบุชื่อให้ชัดเจน</h3>
                 <input type="text" id="tournament-category" placeholder="ตัวอย่าง: ชายคู่ มือ C, หญิงคู่ ทั่วไป" onchange="autoSave()">
             </div>
 
@@ -274,33 +107,36 @@
                 <div class="setup-grid" id="inputs-container"></div>
             </div>
 
-            <!-- ปุ่มกลับไปหน้าสายการแข่งขัน หากเคยมีข้อมูลแล้ว -->
-            <button id="btn-resume" class="primary-btn" style="background-color: #2e7d32; display: none;" onclick="resumeBracket()">ดูสายการแข่งขันปัจจุบัน (กลับไปหน้าเดิม)</button>
+            <button id="btn-resume" class="primary-btn" style="background-color: #2e7d32; display: none;" onclick="resumeBracket()">ดูสายการแข่งขันปัจจุบัน (ที่บันทึกไว้)</button>
             <button class="primary-btn" onclick="initApp(true)">สร้างและสุ่มสายการแข่งขันใหม่</button>
-            <button class="danger-btn" onclick="clearAllData()">ล้างข้อมูลทั้งหมด (เริ่มใหม่)</button>
-        </div>
-    </div>
-
-    <div id="bracket-screen">
-        <div class="banner-container">
-            <img src="1784518317719.jpg" alt="Tournament Banner">
+            <button class="danger-btn" onclick="clearCurrentCategoryData()">ล้างข้อมูลสำหรับประเภทนี้ (เริ่มใหม่)</button>
         </div>
 
-        <h1 id="display-category" style="margin-top: 0;">ประเภทการแข่งขัน</h1>
-        
-        <div class="header-buttons">
-            <button onclick="resetApp()" style="background-color: #757575;">กลับไปตั้งค่า</button>
-            <button onclick="initApp(true)" style="background-color: #d32f2f;">สุ่มสายการแข่งใหม่อีกครั้ง</button>
-            <button onclick="exportToExcel()" style="background-color: #2e7d32;">Export เป็น Excel</button>
+        <!-- หน้าแสดงสายการแข่ง (Bracket) -->
+        <div id="bracket-screen">
+            <div class="banner-container">
+                <img src="1784518317719.jpg" alt="Tournament Banner" onerror="this.style.display='none'">
+            </div>
+
+            <h1 id="display-category" style="margin-top: 0;">สายการแข่งขัน</h1>
+            
+            <div class="header-buttons">
+                <button onclick="resetApp()" style="background-color: #757575;">กลับไปตั้งค่า</button>
+                <button onclick="initApp(true)" style="background-color: #d32f2f;">สุ่มสายการแข่งใหม่อีกครั้ง</button>
+                <button onclick="exportToExcel()" style="background-color: #2e7d32;">Export เป็น Excel</button>
+            </div>
+            
+            <div class="bracket-wrapper" id="bracket-wrapper">
+                <svg id="lines-svg"></svg>
+                <div id="matches-container"></div>
+            </div>
         </div>
-        
-        <div class="bracket-wrapper" id="bracket-wrapper">
-            <svg id="lines-svg"></svg>
-            <div id="matches-container"></div>
-        </div>
+
     </div>
 
     <script>
+        // ================= ตัวแปรระบบหลัก =================
+        let currentCategory = "";
         const totalTeams = 16;
         let bracketState = {};
         
@@ -351,7 +187,77 @@
             29: { nextWin: {id: 'Final', slot: 't2'} },
             'Final': {}
         };
-        
+
+        // ================= ระบบ Dashboard =================
+        function createNewCategory() {
+            const name = document.getElementById('new-cat-name').value.trim();
+            if(!name) { alert("กรุณาใส่ชื่อประเภท"); return; }
+            let cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
+            if(!cats.includes(name)) {
+                cats.push(name);
+                localStorage.setItem('badminton_categories', JSON.stringify(cats));
+                document.getElementById('new-cat-name').value = '';
+            } else {
+                alert("มีชื่อประเภทนี้อยู่แล้ว!");
+            }
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const list = document.getElementById('cat-list');
+            const cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
+            if (cats.length === 0) {
+                list.innerHTML = '<p style="color:#777;">ยังไม่มีประเภทการแข่งขัน กรุณาสร้างใหม่ด้านล่าง</p>';
+                return;
+            }
+            list.innerHTML = cats.map(c => `
+                <div class="cat-item">
+                    <span style="font-size: 18px; font-weight: bold;">${c}</span>
+                    <div>
+                        <button class="btn" style="background:#2e7d32;" onclick="loadCategory('${c}')">เปิดจัดการ</button>
+                        <button class="btn" style="background:#d32f2f;" onclick="deleteCategory('${c}')">ลบ</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteCategory(name) {
+            if(confirm(`คุณแน่ใจหรือไม่ว่าจะลบประเภท "${name}" ? ข้อมูลทั้งหมดจะหายไป!`)) {
+                let cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
+                cats = cats.filter(c => c !== name);
+                localStorage.setItem('badminton_categories', JSON.stringify(cats));
+                
+                // เคลียร์ข้อมูลลูกๆ ของประเภทนี้
+                localStorage.removeItem(`badminton_${name}_setup`);
+                localStorage.removeItem(`badminton_${name}_state`);
+                localStorage.removeItem(`badminton_${name}_screen`);
+                renderDashboard();
+            }
+        }
+
+        function backToDashboard() {
+            document.getElementById('dashboard-view').style.display = 'block';
+            document.getElementById('category-view').style.display = 'none';
+            currentCategory = ""; // reset
+            renderDashboard();
+        }
+
+        // ================= โหลดเข้าจัดการหมวดหมู่ที่เลือก =================
+        function loadCategory(name) {
+            currentCategory = name;
+            
+            // สลับหน้าจอ
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('category-view').style.display = 'block';
+            
+            // อัปเดต Title
+            document.getElementById('current-cat-title').innerText = "ประเภท: " + name;
+            
+            // สั่งโหลดข้อมูลของสายการแข่งขันที่ผูกกับ currentCategory
+            loadSavedData();
+        }
+
+        // ================= ระบบจัดการแข่งขัน (ปรับปรุง LocalStorage ให้ผูกกับ Category) =================
         function generateCourtInputs() {
             let num = parseInt(document.getElementById('num-courts').value);
             if (isNaN(num) || num < 1) { num = 1; document.getElementById('num-courts').value = 1; }
@@ -382,6 +288,7 @@
         }
 
         function autoSave() {
+            if (!currentCategory) return;
             const setupData = {
                 category: document.getElementById('tournament-category').value,
                 numCourts: document.getElementById('num-courts').value,
@@ -398,19 +305,21 @@
                 if (el) setupData.teams.push(el.value);
             }
             
-            localStorage.setItem('badminton_setup', JSON.stringify(setupData));
-            localStorage.setItem('badminton_state', JSON.stringify(bracketState));
-            localStorage.setItem('badminton_screen', document.getElementById('setup-screen').parentElement.style.display === 'none' ? 'bracket' : 'setup');
+            // ใช้ Key เฉพาะตัวของ Category
+            localStorage.setItem(`badminton_${currentCategory}_setup`, JSON.stringify(setupData));
+            localStorage.setItem(`badminton_${currentCategory}_state`, JSON.stringify(bracketState));
+            localStorage.setItem(`badminton_${currentCategory}_screen`, document.getElementById('main-setup-container').style.display === 'none' ? 'bracket' : 'setup');
         }
 
         function loadSavedData() {
             buildTeamInputs();
             generateCourtInputs();
 
-            let savedSetup = localStorage.getItem('badminton_setup');
+            // ดึงข้อมูลที่เก็บตามชื่อ Category
+            let savedSetup = localStorage.getItem(`badminton_${currentCategory}_setup`);
             if (savedSetup) {
                 let data = JSON.parse(savedSetup);
-                document.getElementById('tournament-category').value = data.category || '';
+                document.getElementById('tournament-category').value = data.category || currentCategory;
                 document.getElementById('num-courts').value = data.numCourts || 3;
                 
                 generateCourtInputs();
@@ -422,28 +331,38 @@
                     let el = document.getElementById(`team-${i+1}`);
                     if (el) el.value = data.teams[i];
                 }
+            } else {
+                // ถ้าเพิ่งสร้างใหม่ ให้ใส่ชื่อ Category ไว้ในช่องให้อัตโนมัติ
+                document.getElementById('tournament-category').value = currentCategory;
             }
 
-            let savedState = localStorage.getItem('badminton_state');
+            let savedState = localStorage.getItem(`badminton_${currentCategory}_state`);
             if (savedState) {
                 bracketState = JSON.parse(savedState);
                 if (Object.keys(bracketState).length > 0) {
                     document.getElementById('btn-resume').style.display = 'block';
+                } else {
+                    document.getElementById('btn-resume').style.display = 'none';
                 }
+            } else {
+                bracketState = {};
+                document.getElementById('btn-resume').style.display = 'none';
             }
 
-            let savedScreen = localStorage.getItem('badminton_screen');
+            let savedScreen = localStorage.getItem(`badminton_${currentCategory}_screen`);
             if (savedScreen === 'bracket' && Object.keys(bracketState).length > 0) {
                 resumeBracket();
+            } else {
+                resetApp();
             }
         }
 
-        function clearAllData() {
-            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมด? ข้อมูลการแข่งขันจะหายไปอย่างถาวร!')) {
-                localStorage.removeItem('badminton_setup');
-                localStorage.removeItem('badminton_state');
-                localStorage.removeItem('badminton_screen');
-                location.reload();
+        function clearCurrentCategoryData() {
+            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูล "ทั้งหมด" ของประเภทนี้?')) {
+                localStorage.removeItem(`badminton_${currentCategory}_setup`);
+                localStorage.removeItem(`badminton_${currentCategory}_state`);
+                localStorage.removeItem(`badminton_${currentCategory}_screen`);
+                loadSavedData(); // โหลดหน้าฟอร์มเปล่าใหม่
             }
         }
 
@@ -464,7 +383,6 @@
             }
             if (courtsList.length === 0) courtsList = ["สนามกลาง"];
 
-            // 1. กรองเฉพาะทีมที่มีชื่อ เพื่อเตรียมจัดลงสาย
             let enteredTeams = [];
             for (let i = 1; i <= totalTeams; i++) {
                 let name = document.getElementById(`team-${i}`).value.trim();
@@ -473,22 +391,11 @@
                 }
             }
             
-            // 2. สุ่มลำดับของทีมทั้งหมด
             if (forceRandomize) {
                 enteredTeams = shuffleArray(enteredTeams);
             }
 
-            // 3. กำหนดลำดับ Seed มาตรฐาน (1-16) สำหรับกระจายทีมและ BYE ให้สมดุลกันในแต่ละสายการแข่งขัน
-            const seedOrder = [
-                1, 16,  // แมตช์ 1
-                8, 9,   // แมตช์ 2
-                4, 13,  // แมตช์ 3
-                5, 12,  // แมตช์ 4
-                2, 15,  // แมตช์ 5
-                7, 10,  // แมตช์ 6
-                3, 14,  // แมตช์ 7
-                6, 11   // แมตช์ 8
-            ];
+            const seedOrder = [ 1, 16, 8, 9, 4, 13, 5, 12, 2, 15, 7, 10, 3, 14, 6, 11 ];
             
             let bracketSlots = new Array(16).fill("BYE");
             for (let i = 0; i < enteredTeams.length; i++) {
@@ -501,15 +408,12 @@
             bracketState = {};
             for(let key in matchData) {
                 bracketState[key] = {
-                    t1: null, t2: null,
-                    winner: null, loser: null,
-                    court: null,
+                    t1: null, t2: null, winner: null, loser: null, court: null,
                     needsTieBreaker: false,
                     scores: { t1g1: '', t1g2: '', t2g1: '', t2g2: '', t1extra: '', t2extra: '' }
                 };
             }
 
-            // นำทีมใน Slot ใส่ในคู่การแข่งขันรอบแรก (8 คู่)
             for (let i = 0; i < 8; i++) {
                 bracketState[i + 1].t1 = bracketSlots[i * 2];
                 bracketState[i + 1].t2 = bracketSlots[i * 2 + 1];
@@ -544,13 +448,13 @@
             
             renderBracket();
             drawLines();
-            localStorage.setItem('badminton_screen', 'bracket');
+            localStorage.setItem(`badminton_${currentCategory}_screen`, 'bracket');
         }
 
         function resetApp() {
             document.getElementById('main-setup-container').style.display = 'block';
             document.getElementById('bracket-screen').style.display = 'none';
-            localStorage.setItem('badminton_screen', 'setup');
+            localStorage.setItem(`badminton_${currentCategory}_screen`, 'setup');
         }
 
         function processByes() {
@@ -789,7 +693,7 @@
         }
 
         function exportToExcel() {
-            let cat = document.getElementById('tournament-category').value.trim() || 'Tournament';
+            let cat = document.getElementById('tournament-category').value.trim() || currentCategory || 'Tournament';
             let excelData = [];
             
             for (let key in bracketState) {
@@ -829,7 +733,10 @@
             XLSX.writeFile(wb, `${cat}_Results.xlsx`);
         }
 
-        window.onload = loadSavedData;
+        // ================= เริ่มทำงานเมื่อโหลดหน้าจอ =================
+        window.onload = function() {
+            renderDashboard(); // โหลดหน้า Dashboard เป็นอันดับแรก
+        };
     </script>
 </body>
 </html>
