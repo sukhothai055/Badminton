@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการแข่งขันแบดมินตัน (16 Teams Double Elimination)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: #1f4e79;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .banner-container {
+            width: 100%;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .banner-container img {
+            width: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .setup-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+        .setup-section h3 { margin-top: 0; }
+        
+        .setup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .setup-grid input, .setup-section > input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .setup-section > input[type="text"]:focus, .setup-grid input:focus {
+            border-color: #1f4e79;
+            outline: none;
+        }
+        
+        button.primary-btn {
+            background-color: #1f4e79;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        button.primary-btn:hover { background-color: #153654; }
+        
+        button.danger-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button.danger-btn:hover { background-color: #b71c1c; }
+
+        #bracket-screen {
+            display: none;
+            overflow-x: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto 20px auto;
+        }
+        .header-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .bracket-wrapper {
+            position: relative;
+            width: 1850px;
+            height: 1850px;
+            margin: 0 auto;
+        }
+
+        .match-box {
+            position: absolute;
+            width: 230px;
+            height: 135px;
+            border: 2px solid #1f4e79;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 2;
+            padding: 6px;
+            box-sizing: border-box;
+        }
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1f4e79;
+            color: white;
+            margin: -6px -6px 6px -6px;
+            border-radius: 6px 6px 0 0;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .court-badge {
+            background: #ff9800;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        .team-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .team-name {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .score-input {
+            width: 35px;
+            height: 28px;
+            margin-left: 5px;
+            text-align: center;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .score-input:focus { border-color: #1f4e79; outline: none; }
+        .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; }
+        
+        .tie-breaker-input {
+            border: 2px solid #ff9800;
+            background-color: #fff3e0;
+            color: #d32f2f;
+        }
+
+        .confirm-btn {
+            margin-top: auto;
+            font-size: 14px;
+            padding: 6px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+        .confirm-btn:hover { background: #45a049; }
+        
+        .status-text {
+            margin-top: auto;
+            font-size: 13px;
+            text-align: center;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .edit-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            padding: 3px 6px;
+            cursor: pointer;
+            margin-top: auto;
+        }
+
+        #lines-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .bracket-title {
+            position: absolute;
+            font-size: 26px;
+            font-weight: bold;
+            color: #1f4e79;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container" id="main-setup-container">
+        <div class="container" id="setup-screen">
+            <h1>ตั้งค่าสายการแข่งขัน</h1>
+            
+            <div class="setup-section">
+                <h3>1. กำหนดประเภทการแข่งขัน</h3>
+                <input type="text" id="tournament-category" placeholder="ตัวอย่าง: ชายคู่ มือ C, หญิงคู่ ทั่วไป" onchange="autoSave()">
+            </div>
+
+            <div class="setup-section">
+                <h3>2. กำหนดสนามแข่งขัน</h3>
+                <div style="margin-bottom: 15px; text-align: center;">
+                    <label>จำนวนสนามทั้งหมด: </label>
+                    <input type="number" id="num-courts" min="1" max="20" value="3" onchange="generateCourtInputs(); autoSave();" style="width: 80px; padding: 5px; text-align: center; font-size: 16px;">
+                </div>
+                <div class="setup-grid" id="courts-container"></div>
+            </div>
+
+            <div class="setup-section">
+                <h3>3. กำหนดทีมแข่งขัน (16 ทีม)</h3>
+                <p style="text-align: center; color: #666; font-size: 13px; margin-top: 0;">
+                    ช่องที่เว้นว่างไว้จะถือเป็น "BYE" (ชนะผ่านอัตโนมัติ)<br>
+                    ระบบจะจัดสรรสนามและทีมให้อย่างสมดุลอัตโนมัติ
+                </p>
+                <div class="setup-grid" id="inputs-container"></div>
+            </div>
+
+            <!-- ปุ่มกลับไปหน้าสายการแข่งขัน หากเคยมีข้อมูลแล้ว -->
+            <button id="btn-resume" class="primary-btn" style="background-color: #2e7d32; display: none;" onclick="resumeBracket()">ดูสายการแข่งขันปัจจุบัน (กลับไปหน้าเดิม)</button>
+            <button class="primary-btn" onclick="initApp(true)">สร้างและสุ่มสายการแข่งขันใหม่</button>
+            <button class="danger-btn" onclick="clearAllData()">ล้างข้อมูลทั้งหมด (เริ่มใหม่)</button>
+        </div>
+    </div>
+
+    <div id="bracket-screen">
+        <div class="banner-container">
+            <img src="1784518317719.jpg" alt="Tournament Banner">
+        </div>
+
+        <h1 id="display-category" style="margin-top: 0;">ประเภทการแข่งขัน</h1>
+        
+        <div class="header-buttons">
+            <button onclick="resetApp()" style="background-color: #757575;">กลับไปตั้งค่า</button>
+            <button onclick="initApp(true)" style="background-color: #d32f2f;">สุ่มสายการแข่งใหม่อีกครั้ง</button>
+            <button onclick="exportToExcel()" style="background-color: #2e7d32;">Export เป็น Excel</button>
+        </div>
+        
+        <div class="bracket-wrapper" id="bracket-wrapper">
+            <svg id="lines-svg"></svg>
+            <div id="matches-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const totalTeams = 16;
+        let bracketState = {};
+        
+        const matchData = {
+            1:  { x: 20, y: 25 },    2:  { x: 20, y: 175 },   3:  { x: 20, y: 325 },   4:  { x: 20, y: 475 },
+            5:  { x: 20, y: 625 },   6:  { x: 20, y: 775 },   7:  { x: 20, y: 925 },   8:  { x: 20, y: 1075 },
+            13: { x: 290, y: 100 },  14: { x: 290, y: 400 },  15: { x: 290, y: 700 },  16: { x: 290, y: 1000 },
+            23: { x: 560, y: 250 },  24: { x: 560, y: 850 },
+            28: { x: 830, y: 550 },
+            9:  { x: 20, y: 1250 },  10: { x: 20, y: 1400 },  11: { x: 20, y: 1550 },  12: { x: 20, y: 1700 },
+            17: { x: 290, y: 1250 }, 18: { x: 290, y: 1400 }, 19: { x: 290, y: 1550 }, 20: { x: 290, y: 1700 },
+            21: { x: 560, y: 1325 }, 22: { x: 560, y: 1625 },
+            25: { x: 830, y: 1325 }, 26: { x: 830, y: 1625 },
+            27: { x: 1100, y: 1475 },
+            29: { x: 1370, y: 1475 },
+            'Final': { x: 1640, y: 1012 }
+        };
+
+        const graph = {
+            1: { nextWin: {id: 13, slot: 't1'}, nextLose: {id: 9, slot: 't1'} },
+            2: { nextWin: {id: 13, slot: 't2'}, nextLose: {id: 9, slot: 't2'} },
+            3: { nextWin: {id: 14, slot: 't1'}, nextLose: {id: 10, slot: 't1'} },
+            4: { nextWin: {id: 14, slot: 't2'}, nextLose: {id: 10, slot: 't2'} },
+            5: { nextWin: {id: 15, slot: 't1'}, nextLose: {id: 11, slot: 't1'} },
+            6: { nextWin: {id: 15, slot: 't2'}, nextLose: {id: 11, slot: 't2'} },
+            7: { nextWin: {id: 16, slot: 't1'}, nextLose: {id: 12, slot: 't1'} },
+            8: { nextWin: {id: 16, slot: 't2'}, nextLose: {id: 12, slot: 't2'} },
+            13: { nextWin: {id: 23, slot: 't1'}, nextLose: {id: 17, slot: 't1', isDrop: true} },
+            14: { nextWin: {id: 23, slot: 't2'}, nextLose: {id: 18, slot: 't1', isDrop: true} },
+            15: { nextWin: {id: 24, slot: 't1'}, nextLose: {id: 19, slot: 't1', isDrop: true} },
+            16: { nextWin: {id: 24, slot: 't2'}, nextLose: {id: 20, slot: 't1', isDrop: true} },
+            9:  { nextWin: {id: 17, slot: 't2'} },
+            10: { nextWin: {id: 18, slot: 't2'} },
+            11: { nextWin: {id: 19, slot: 't2'} },
+            12: { nextWin: {id: 20, slot: 't2'} },
+            17: { nextWin: {id: 21, slot: 't1'} },
+            18: { nextWin: {id: 21, slot: 't2'} },
+            19: { nextWin: {id: 22, slot: 't1'} },
+            20: { nextWin: {id: 22, slot: 't2'} },
+            23: { nextWin: {id: 28, slot: 't1'}, nextLose: {id: 25, slot: 't1', isDrop: true} },
+            24: { nextWin: {id: 28, slot: 't2'}, nextLose: {id: 26, slot: 't1', isDrop: true} },
+            21: { nextWin: {id: 25, slot: 't2'} },
+            22: { nextWin: {id: 26, slot: 't2'} },
+            25: { nextWin: {id: 27, slot: 't1'} },
+            26: { nextWin: {id: 27, slot: 't2'} },
+            28: { nextWin: {id: 'Final', slot: 't1'}, nextLose: {id: 29, slot: 't1', isDrop: true} },
+            27: { nextWin: {id: 29, slot: 't2'} },
+            29: { nextWin: {id: 'Final', slot: 't2'} },
+            'Final': {}
+        };
+        
+        function generateCourtInputs() {
+            let num = parseInt(document.getElementById('num-courts').value);
+            if (isNaN(num) || num < 1) { num = 1; document.getElementById('num-courts').value = 1; }
+            const container = document.getElementById('courts-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= num; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `court-${i}`;
+                input.placeholder = `ชื่อ/หมายเลขสนาม ${i}`;
+                input.value = `สนาม ${i}`;
+                input.addEventListener('change', autoSave);
+                container.appendChild(input);
+            }
+        }
+
+        function buildTeamInputs() {
+            const inputsContainer = document.getElementById('inputs-container');
+            inputsContainer.innerHTML = '';
+            for (let i = 1; i <= totalTeams; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `team-${i}`;
+                input.placeholder = `ชื่อทีมที่ ${i} (เว้นว่าง = BYE)`;
+                input.addEventListener('change', autoSave);
+                inputsContainer.appendChild(input);
+            }
+        }
+
+        function autoSave() {
+            const setupData = {
+                category: document.getElementById('tournament-category').value,
+                numCourts: document.getElementById('num-courts').value,
+                courts: [],
+                teams: []
+            };
+            
+            for (let i = 1; i <= setupData.numCourts; i++) {
+                let el = document.getElementById(`court-${i}`);
+                if (el) setupData.courts.push(el.value);
+            }
+            for (let i = 1; i <= 16; i++) {
+                let el = document.getElementById(`team-${i}`);
+                if (el) setupData.teams.push(el.value);
+            }
+            
+            localStorage.setItem('badminton_setup', JSON.stringify(setupData));
+            localStorage.setItem('badminton_state', JSON.stringify(bracketState));
+            localStorage.setItem('badminton_screen', document.getElementById('setup-screen').parentElement.style.display === 'none' ? 'bracket' : 'setup');
+        }
+
+        function loadSavedData() {
+            buildTeamInputs();
+            generateCourtInputs();
+
+            let savedSetup = localStorage.getItem('badminton_setup');
+            if (savedSetup) {
+                let data = JSON.parse(savedSetup);
+                document.getElementById('tournament-category').value = data.category || '';
+                document.getElementById('num-courts').value = data.numCourts || 3;
+                
+                generateCourtInputs();
+                for (let i = 0; i < data.courts.length; i++) {
+                    let el = document.getElementById(`court-${i+1}`);
+                    if (el) el.value = data.courts[i];
+                }
+                for (let i = 0; i < data.teams.length; i++) {
+                    let el = document.getElementById(`team-${i+1}`);
+                    if (el) el.value = data.teams[i];
+                }
+            }
+
+            let savedState = localStorage.getItem('badminton_state');
+            if (savedState) {
+                bracketState = JSON.parse(savedState);
+                if (Object.keys(bracketState).length > 0) {
+                    document.getElementById('btn-resume').style.display = 'block';
+                }
+            }
+
+            let savedScreen = localStorage.getItem('badminton_screen');
+            if (savedScreen === 'bracket' && Object.keys(bracketState).length > 0) {
+                resumeBracket();
+            }
+        }
+
+        function clearAllData() {
+            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมด? ข้อมูลการแข่งขันจะหายไปอย่างถาวร!')) {
+                localStorage.removeItem('badminton_setup');
+                localStorage.removeItem('badminton_state');
+                localStorage.removeItem('badminton_screen');
+                location.reload();
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initApp(forceRandomize = false) {
+            let numCourts = parseInt(document.getElementById('num-courts').value) || 1;
+            let courtsList = [];
+            for (let i = 1; i <= numCourts; i++) {
+                let c = document.getElementById(`court-${i}`).value.trim();
+                if (c) courtsList.push(c);
+            }
+            if (courtsList.length === 0) courtsList = ["สนามกลาง"];
+
+            // 1. กรองเฉพาะทีมที่มีชื่อ เพื่อเตรียมจัดลงสาย
+            let enteredTeams = [];
+            for (let i = 1; i <= totalTeams; i++) {
+                let name = document.getElementById(`team-${i}`).value.trim();
+                if (name !== "") {
+                    enteredTeams.push(name);
+                }
+            }
+            
+            // 2. สุ่มลำดับของทีมทั้งหมด
+            if (forceRandomize) {
+                enteredTeams = shuffleArray(enteredTeams);
+            }
+
+            // 3. กำหนดลำดับ Seed มาตรฐาน (1-16) สำหรับกระจายทีมและ BYE ให้สมดุลกันในแต่ละสายการแข่งขัน
+            const seedOrder = [
+                1, 16,  // แมตช์ 1
+                8, 9,   // แมตช์ 2
+                4, 13,  // แมตช์ 3
+                5, 12,  // แมตช์ 4
+                2, 15,  // แมตช์ 5
+                7, 10,  // แมตช์ 6
+                3, 14,  // แมตช์ 7
+                6, 11   // แมตช์ 8
+            ];
+            
+            let bracketSlots = new Array(16).fill("BYE");
+            for (let i = 0; i < enteredTeams.length; i++) {
+                let slotIndex = seedOrder.indexOf(i + 1);
+                if (slotIndex !== -1) {
+                    bracketSlots[slotIndex] = enteredTeams[i];
+                }
+            }
+
+            bracketState = {};
+            for(let key in matchData) {
+                bracketState[key] = {
+                    t1: null, t2: null,
+                    winner: null, loser: null,
+                    court: null,
+                    needsTieBreaker: false,
+                    scores: { t1g1: '', t1g2: '', t2g1: '', t2g2: '', t1extra: '', t2extra: '' }
+                };
+            }
+
+            // นำทีมใน Slot ใส่ในคู่การแข่งขันรอบแรก (8 คู่)
+            for (let i = 0; i < 8; i++) {
+                bracketState[i + 1].t1 = bracketSlots[i * 2];
+                bracketState[i + 1].t2 = bracketSlots[i * 2 + 1];
+            }
+
+            processByes();
+
+            const playOrder = [1,2,3,4,5,6,7,8, 13,14,15,16, 9,10,11,12, 17,18,19,20, 23,24, 21,22, 28, 25,26, 27, 29, 'Final'];
+            let cIdx = 0;
+            for (let mId of playOrder) {
+                let st = bracketState[mId];
+                let isDefiniteBye = (st.t1 === 'BYE' || st.t2 === 'BYE');
+                if (st.winner || isDefiniteBye) {
+                    st.court = null; 
+                } else {
+                    st.court = courtsList[cIdx % courtsList.length];
+                    cIdx++;
+                }
+            }
+
+            document.getElementById('btn-resume').style.display = 'block';
+            autoSave();
+            resumeBracket();
+        }
+
+        function resumeBracket() {
+            document.getElementById('main-setup-container').style.display = 'none';
+            document.getElementById('bracket-screen').style.display = 'block';
+            
+            let cat = document.getElementById('tournament-category').value.trim();
+            document.getElementById('display-category').innerText = cat ? `สายการแข่งขัน - ${cat}` : 'สายการแข่งขัน';
+            
+            renderBracket();
+            drawLines();
+            localStorage.setItem('badminton_screen', 'bracket');
+        }
+
+        function resetApp() {
+            document.getElementById('main-setup-container').style.display = 'block';
+            document.getElementById('bracket-screen').style.display = 'none';
+            localStorage.setItem('badminton_screen', 'setup');
+        }
+
+        function processByes() {
+            let changed = true;
+            while(changed) {
+                changed = false;
+                for(let key in bracketState) {
+                    let st = bracketState[key];
+                    if (!st.winner && st.t1 && st.t2 && (st.t1 === 'BYE' || st.t2 === 'BYE')) {
+                        if (st.t1 === 'BYE' && st.t2 !== 'BYE') {
+                            st.winner = st.t2; st.loser = st.t1;
+                        } else if (st.t2 === 'BYE' && st.t1 !== 'BYE') {
+                            st.winner = st.t1; st.loser = st.t2;
+                        } else {
+                            st.winner = 'BYE'; st.loser = 'BYE';
+                        }
+                        propagateResult(key, st.winner, st.loser);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        function propagateResult(mId, winner, loser) {
+            let node = graph[mId];
+            if (node.nextWin && winner !== 'ELIMINATED') {
+                bracketState[node.nextWin.id][node.nextWin.slot] = winner;
+            }
+            if (node.nextLose) {
+                bracketState[node.nextLose.id][node.nextLose.slot] = loser;
+            }
+        }
+
+        function getPlaceholder(mId, slot) {
+            for (let key in graph) {
+                if (graph[key].nextWin && graph[key].nextWin.id == mId && graph[key].nextWin.slot == slot) 
+                    return `(รอผู้ชนะ M${key})`;
+                if (graph[key].nextLose && graph[key].nextLose.id == mId && graph[key].nextLose.slot == slot) 
+                    return `(รอผู้แพ้ M${key})`;
+            }
+            return `TBD`;
+        }
+
+        function confirmMatch(mId) {
+            let st = bracketState[mId];
+            if(!st.t1 || !st.t2) {
+                alert("ต้องรอให้ทีมครบทั้งสองฝ่ายก่อน"); return;
+            }
+
+            let t1g1 = parseInt(document.getElementById(`m${mId}-t1g1`).value);
+            let t1g2 = parseInt(document.getElementById(`m${mId}-t1g2`).value);
+            let t2g1 = parseInt(document.getElementById(`m${mId}-t2g1`).value);
+            let t2g2 = parseInt(document.getElementById(`m${mId}-t2g2`).value);
+
+            if(isNaN(t1g1) || isNaN(t1g2) || isNaN(t2g1) || isNaN(t2g2)) {
+                alert("กรุณากรอกคะแนนให้ครบทั้ง 2 เกมสำหรับทั้งสองทีม"); return;
+            }
+
+            st.scores = { ...st.scores, t1g1, t1g2, t2g1, t2g2 };
+            let t1Wins = 0, t2Wins = 0;
+            if(t1g1 > t2g1) t1Wins++; else if(t2g1 > t1g1) t2Wins++;
+            if(t1g2 > t2g2) t1Wins++; else if(t2g2 > t1g2) t2Wins++;
+
+            let winner = null, loser = null;
+            
+            if (t1Wins === 2) {
+                winner = st.t1; loser = st.t2;
+            } else if (t2Wins === 2) {
+                winner = st.t2; loser = st.t1;
+            } else if (t1Wins === 1 && t2Wins === 1) {
+                let t1Total = t1g1 + t1g2;
+                let t2Total = t2g1 + t2g2;
+                if (t1Total > t2Total) {
+                    winner = st.t1; loser = st.t2;
+                    alert(`เสมอ 1-1 เกม\n[${st.t1}] ชนะด้วยคะแนนรวม ${t1Total} - ${t2Total}`);
+                } else if (t2Total > t1Total) {
+                    winner = st.t2; loser = st.t1;
+                    alert(`เสมอ 1-1 เกม\n[${st.t2}] ชนะด้วยคะแนนรวม ${t2Total} - ${t1Total}`);
+                } else {
+                    if (!st.needsTieBreaker) {
+                        st.needsTieBreaker = true;
+                        alert(`คะแนนรวมเท่ากัน (${t1Total} - ${t2Total})\nระบบได้เปิดช่องแต้มพิเศษ กรุณากรอกคะแนนเพื่อตัดสินผลชนะ`);
+                        autoSave();
+                        renderBracket();
+                        return;
+                    } else {
+                        let t1ex = parseInt(document.getElementById(`m${mId}-t1ex`)?.value);
+                        let t2ex = parseInt(document.getElementById(`m${mId}-t2ex`)?.value);
+                        if (isNaN(t1ex) || isNaN(t2ex)) {
+                            alert("กรุณากรอกแต้มพิเศษให้ครบถ้วน"); return;
+                        }
+                        if (t1ex > t2ex) {
+                            winner = st.t1; loser = st.t2;
+                        } else if (t2ex > t1ex) {
+                            winner = st.t2; loser = st.t1;
+                        } else {
+                            alert("แต้มพิเศษไม่สามารถเท่ากันได้ กรุณาตรวจสอบ"); return;
+                        }
+                    }
+                }
+            } else {
+                alert("รูปแบบคะแนนไม่ถูกต้อง แต่ละเกมต้องมีผู้ชนะ"); return;
+            }
+
+            st.winner = winner; st.loser = loser;
+            propagateResult(mId, winner, loser);
+            processByes();
+            renderBracket();
+            autoSave(); 
+        }
+
+        function editMatch(mId) {
+            let st = bracketState[mId];
+            st.winner = null; st.loser = null;
+            st.needsTieBreaker = false;
+            renderBracket();
+            autoSave();
+        }
+
+        function renderBracket() {
+            const container = document.getElementById('matches-container');
+            let html = '';
+
+            html += '<div class="bracket-title" style="left:20px; top: -10px;">Upper Bracket (สายบน)</div>';
+            html += '<div class="bracket-title" style="left:20px; top: 1200px;">Lower Bracket (สายล่าง)</div>';
+
+            for (let key in matchData) {
+                let d = matchData[key];
+                let st = bracketState[key];
+                
+                let t1Name = st.t1 || getPlaceholder(key, 't1');
+                let t2Name = st.t2 || getPlaceholder(key, 't2');
+                let isBye = (st.t1 === 'BYE' || st.t2 === 'BYE');
+                let isWaiting = (!st.t1 || !st.t2 || st.t1 === 'BYE' || st.t2 === 'BYE');
+                let disableAttr = (st.winner || isWaiting) ? 'disabled' : '';
+                
+                let matchTitle = key === 'Final' ? 'Grand Final' : 'Match ' + key;
+                let courtBadge = st.court ? `<span class="court-badge">${st.court}</span>` : '';
+                
+                let tieHtml1 = st.needsTieBreaker ? `<input type="number" id="m${key}-t1ex" class="score-input tie-breaker-input" placeholder="+" value="${st.scores.t1extra || ''}" ${st.winner ? 'disabled' : ''} onchange="autoSaveScores('${key}')" title="แต้มพิเศษ">` : '';
+                let tieHtml2 = st.needsTieBreaker ? `<input type="number" id="m${key}-t2ex" class="score-input tie-breaker-input" placeholder="+" value="${st.scores.t2extra || ''}" ${st.winner ? 'disabled' : ''} onchange="autoSaveScores('${key}')" title="แต้มพิเศษ">` : '';
+
+                html += `<div class="match-box" style="left:${d.x}px; top:${d.y}px;">
+                    <div class="match-header">
+                        <span>${matchTitle}</span>
+                        ${courtBadge}
+                    </div>
+                    
+                    <div class="team-row">
+                        <div class="team-name" title="${t1Name}">${t1Name}</div>
+                        <input type="number" id="m${key}-t1g1" class="score-input" placeholder="G1" value="${st.scores.t1g1}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        <input type="number" id="m${key}-t1g2" class="score-input" placeholder="G2" value="${st.scores.t1g2}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        ${tieHtml1}
+                    </div>
+                    
+                    <div class="team-row">
+                        <div class="team-name" title="${t2Name}">${t2Name}</div>
+                        <input type="number" id="m${key}-t2g1" class="score-input" placeholder="G1" value="${st.scores.t2g1}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        <input type="number" id="m${key}-t2g2" class="score-input" placeholder="G2" value="${st.scores.t2g2}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        ${tieHtml2}
+                    </div>`;
+                
+                if (st.winner) {
+                    let winText = isBye ? 'ชนะผ่าน (BYE)' : `Winner: ${st.winner}`;
+                    html += `<div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                                <span class="status-text">${winText}</span>
+                                ${!isBye ? `<button class="edit-btn" onclick="editMatch('${key}')">แก้ไข</button>` : ''}
+                             </div>`;
+                } else if (!isBye) {
+                    let btnDisabled = isWaiting ? 'style="background-color: #ccc; cursor: not-allowed;" disabled' : '';
+                    let btnText = isWaiting ? 'รอผลคู่ก่อนหน้า' : 'ยืนยันผล';
+                    html += `<button class="confirm-btn" onclick="confirmMatch('${key}')" ${btnDisabled}>${btnText}</button>`;
+                }
+                
+                html += `</div>`;
+            }
+            container.innerHTML = html;
+        }
+        
+        function autoSaveScores(mId) {
+            let st = bracketState[mId];
+            st.scores.t1g1 = document.getElementById(`m${mId}-t1g1`)?.value || '';
+            st.scores.t1g2 = document.getElementById(`m${mId}-t1g2`)?.value || '';
+            st.scores.t2g1 = document.getElementById(`m${mId}-t2g1`)?.value || '';
+            st.scores.t2g2 = document.getElementById(`m${mId}-t2g2`)?.value || '';
+            
+            if (st.needsTieBreaker) {
+                st.scores.t1extra = document.getElementById(`m${mId}-t1ex`)?.value || '';
+                st.scores.t2extra = document.getElementById(`m${mId}-t2ex`)?.value || '';
+            }
+            autoSave();
+        }
+
+        function drawLines() {
+            const svg = document.getElementById('lines-svg');
+            let svgHtml = '';
+            const boxW = 230; 
+            const halfH = 67; 
+            
+            function drawPath(x1, y1, x2, y2) {
+                const midX = x1 + (x2 - x1) / 2;
+                return `<path d="M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}" stroke="#1f4e79" stroke-width="2.5" fill="none" />`;
+            }
+
+            function drawDropIcon(x, y) {
+                return `<path d="M ${x-15} ${y-15} L ${x-15} ${y} L ${x} ${y}" stroke="#d32f2f" stroke-width="2.5" fill="none" stroke-dasharray="5"/>`;
+            }
+
+            for (let key in graph) {
+                let sender = matchData[key];
+                let startX = sender.x + boxW;
+                let startY = sender.y + halfH; 
+                
+                let nw = graph[key].nextWin;
+                if (nw) {
+                    let target = matchData[nw.id];
+                    let endX = target.x;
+                    let endY = target.y + (nw.slot === 't1' ? 45 : 90);
+                    svgHtml += drawPath(startX, startY, endX, endY);
+                }
+
+                let nl = graph[key].nextLose;
+                if (nl) {
+                    let target = matchData[nl.id];
+                    let endX = target.x;
+                    let endY = target.y + (nl.slot === 't1' ? 45 : 90);
+                    
+                    if (nl.isDrop) {
+                        svgHtml += drawDropIcon(endX, endY);
+                    } else {
+                        svgHtml += drawPath(startX, startY, endX, endY);
+                    }
+                }
+            }
+            svg.innerHTML = svgHtml;
+        }
+
+        function exportToExcel() {
+            let cat = document.getElementById('tournament-category').value.trim() || 'Tournament';
+            let excelData = [];
+            
+            for (let key in bracketState) {
+                let st = bracketState[key];
+                if (st.t1 && st.t2 && st.t1 !== 'BYE' && st.t2 !== 'BYE') {
+                    excelData.push({
+                        "Match No.": key === 'Final' ? 'Final' : parseInt(key),
+                        "Category": cat,
+                        "Court": st.court || '-',
+                        "Team 1": st.t1,
+                        "G1 (T1)": st.scores.t1g1,
+                        "G2 (T1)": st.scores.t1g2,
+                        "Extra (T1)": st.scores.t1extra,
+                        "G1 (T2)": st.scores.t2g1,
+                        "G2 (T2)": st.scores.t2g2,
+                        "Extra (T2)": st.scores.t2extra,
+                        "Team 2": st.t2,
+                        "Winner": st.winner || 'ยังไม่จบการแข่งขัน'
+                    });
+                }
+            }
+
+            excelData.sort((a, b) => {
+                if (a["Match No."] === 'Final') return 1;
+                if (b["Match No."] === 'Final') return -1;
+                return a["Match No."] - b["Match No."];
+            });
+
+            if (excelData.length === 0) {
+                alert("ยังไม่มีข้อมูลการแข่งขันให้ Export");
+                return;
+            }
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Match Results");
+            XLSX.writeFile(wb, `${cat}_Results.xlsx`);
+        }
+
+        window.onload = loadSavedData;
+    </script>
+</body>
+</html>
