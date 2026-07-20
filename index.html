@@ -6,7 +6,6 @@
     <title>ระบบจัดการแข่งขันแบดมินตัน (Multi-Category & 16 Teams)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* ================= CSS ทั้งหมด ================= */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0; padding: 20px; background-color: #f4f7f6; color: #333;
@@ -16,11 +15,9 @@
         .main-container { max-width: 800px; margin: 0 auto 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* Dashboard Styles */
         .cat-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
         .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; margin-left: 5px; font-size: 14px; }
         
-        /* Setup Styles */
         .setup-section { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
         .setup-section h3 { margin-top: 0; }
         .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
@@ -32,7 +29,6 @@
         button.danger-btn { background-color: #d32f2f; color: white; border: none; padding: 10px; font-size: 14px; border-radius: 5px; cursor: pointer; width: 100%; }
         button.danger-btn:hover { background-color: #b71c1c; }
 
-        /* Bracket Styles */
         #bracket-screen { display: none; overflow-x: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
         .banner-container { width: 100%; border-radius: 10px 10px 0 0; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .banner-container img { width: 100%; display: block; object-fit: cover; }
@@ -71,10 +67,9 @@
         </div>
     </div>
 
-    <!-- ================= หน้าเข้าจัดการประเภทนั้นๆ (ซ่อนไว้ตอนแรก) ================= -->
+    <!-- ================= หน้าเข้าจัดการประเภทนั้นๆ ================= -->
     <div id="category-view" style="display: none;">
         
-        <!-- แถบ Header นำทาง -->
         <div class="main-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;">
             <h2 id="current-cat-title" style="margin: 0;"></h2>
             <button class="btn" style="background:#757575;" onclick="backToDashboard()">กลับไปหน้าหลัก</button>
@@ -257,7 +252,7 @@
             loadSavedData();
         }
 
-        // ================= ระบบจัดการแข่งขัน (ปรับปรุง LocalStorage ให้ผูกกับ Category) =================
+        // ================= ระบบจัดการแข่งขัน =================
         function generateCourtInputs() {
             let num = parseInt(document.getElementById('num-courts').value);
             if (isNaN(num) || num < 1) { num = 1; document.getElementById('num-courts').value = 1; }
@@ -312,6 +307,10 @@
         }
 
         function loadSavedData() {
+            // FIX: บังคับเคลียร์ค่าใน DOM กลับไปเป็นค่าเริ่มต้นก่อน (ป้องกันการดึงค่าจากประเภทอื่นมาแสดง)
+            document.getElementById('tournament-category').value = currentCategory;
+            document.getElementById('num-courts').value = 3; 
+            
             buildTeamInputs();
             generateCourtInputs();
 
@@ -331,9 +330,6 @@
                     let el = document.getElementById(`team-${i+1}`);
                     if (el) el.value = data.teams[i];
                 }
-            } else {
-                // ถ้าเพิ่งสร้างใหม่ ให้ใส่ชื่อ Category ไว้ในช่องให้อัตโนมัติ
-                document.getElementById('tournament-category').value = currentCategory;
             }
 
             let savedState = localStorage.getItem(`badminton_${currentCategory}_state`);
@@ -362,7 +358,7 @@
                 localStorage.removeItem(`badminton_${currentCategory}_setup`);
                 localStorage.removeItem(`badminton_${currentCategory}_state`);
                 localStorage.removeItem(`badminton_${currentCategory}_screen`);
-                loadSavedData(); // โหลดหน้าฟอร์มเปล่าใหม่
+                loadSavedData(); // รีโหลดค่าในหน้าจอใหม่ให้เป็นค่าว่าง
             }
         }
 
