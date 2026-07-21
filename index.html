@@ -3,28 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการแข่งขันแบดมินตัน (Multi-Category & 16 Teams)</title>
+    <title>ระบบจัดการแข่งขันแบดมินตัน (Full Screen & Multi-Export)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* ================= CSS ทั้งหมด ================= */
-        body {
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding: 20px; background-color: #f4f7f6; color: #333;
+            box-sizing: border-box;
         }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
         h1, h2, h3 { text-align: center; color: #1f4e79; }
         
-        .main-container { max-width: 800px; margin: 0 auto 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .main-container { width: 95%; max-width: 1400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* Dashboard Styles */
         .cat-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
         .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; margin-left: 5px; font-size: 14px; }
         
-        /* Setup Styles */
         .setup-section { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
         .setup-section h3 { margin-top: 0; }
-        .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-        .setup-grid input, .setup-section > input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .setup-grid input, .setup-section > input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
         .setup-section > input[type="text"]:focus, .setup-grid input:focus { border-color: #1f4e79; outline: none; }
         
         button.primary-btn { background-color: #1f4e79; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 100%; transition: background-color 0.3s; margin-bottom: 10px; }
@@ -32,47 +42,46 @@
         button.danger-btn { background-color: #d32f2f; color: white; border: none; padding: 10px; font-size: 14px; border-radius: 5px; cursor: pointer; width: 100%; }
         button.danger-btn:hover { background-color: #b71c1c; }
 
-        /* Bracket Styles */
-        #bracket-screen { display: none; overflow-x: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
+        #bracket-screen { display: none; width: 100%; min-height: 100vh; background: white; box-sizing: border-box; }
         
-        /* Banner Styles (อัปเดตให้แสดงทุกหน้า) */
-        .global-banner-wrapper { max-width: 800px; margin: 0 auto 20px auto; }
-        .banner-container { width: 100%; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .banner-container img { width: 100%; display: block; object-fit: cover; }
+        .header-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px auto; }
+        .header-buttons button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 13px; }
         
-        .header-buttons { display: flex; gap: 10px; max-width: 600px; margin: 0 auto 20px auto; }
-        .header-buttons button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
+        /* ขนาดโครงสร้างสายที่ถูกย่อลง */
+        .bracket-wrapper { position: relative; width: 1520px; height: 1650px; margin: 0 auto; }
         
-        .bracket-wrapper { position: relative; width: 1850px; height: 1850px; margin: 0 auto; }
-        .match-box { position: absolute; width: 230px; height: 135px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 6px; box-sizing: border-box; }
-        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -6px -6px 6px -6px; border-radius: 6px 6px 0 0; padding: 4px 8px; font-size: 13px; font-weight: bold; }
-        .court-badge { background: #ff9800; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
-        .team-row { display: flex; align-items: center; margin-bottom: 6px; }
-        .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; font-weight: bold; }
-        .score-input { width: 35px; height: 28px; margin-left: 5px; text-align: center; border: 1px solid #aaa; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        /* ย่อขนาดกล่องแมตช์การแข่งขัน */
+        .match-box { position: absolute; width: 190px; height: 115px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 5px; }
+        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -5px -5px 5px -5px; border-radius: 4px 4px 0 0; padding: 3px 6px; font-size: 11px; font-weight: bold; }
+        
+        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 55px; text-align: right; margin-right: 5px; }
+        .umpire-input::placeholder { color: #ddd; }
+        .umpire-input:focus { background: #fff; color: #333; outline: none; }
+        
+        .court-badge { background: #ff9800; color: #fff; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
+        .team-row { display: flex; align-items: center; margin-bottom: 5px; }
+        
+        .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: bold; }
+        .score-input { width: 30px; height: 24px; margin-left: 4px; text-align: center; border: 1px solid #aaa; border-radius: 3px; font-size: 12px; font-weight: bold; }
         .score-input:focus { border-color: #1f4e79; outline: none; }
         .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; }
         .tie-breaker-input { border: 2px solid #ff9800; background-color: #fff3e0; color: #d32f2f; }
-        .confirm-btn { margin-top: auto; font-size: 14px; padding: 6px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .confirm-btn { margin-top: auto; font-size: 12px; padding: 5px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .confirm-btn:hover { background: #45a049; }
-        .status-text { margin-top: auto; font-size: 13px; text-align: center; color: #d32f2f; font-weight: bold; }
-        .edit-btn { background: #ff9800; color: white; border: none; border-radius: 3px; font-size: 11px; padding: 3px 6px; cursor: pointer; margin-top: auto; }
+        .status-text { margin-top: auto; font-size: 12px; text-align: center; color: #d32f2f; font-weight: bold; }
+        .edit-btn { background: #ff9800; color: white; border: none; border-radius: 3px; font-size: 10px; padding: 3px 6px; cursor: pointer; margin-top: auto; }
         #lines-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        .bracket-title { position: absolute; font-size: 26px; font-weight: bold; color: #1f4e79; z-index: 2; }
+        .bracket-title { position: absolute; font-size: 22px; font-weight: bold; color: #1f4e79; z-index: 2; }
     </style>
 </head>
 <body>
 
-    <!-- ================= Banner สำหรับทุกหน้า ================= -->
-    <div class="global-banner-wrapper">
-        <div class="banner-container">
-            <img src="Gemini_Generated_Image_77lnd577lnd577ln.png" alt="Tournament Banner" onerror="this.style.display='none'">
-        </div>
-    </div>
-
     <!-- ================= หน้า Dashboard เลือกประเภท ================= -->
     <div id="dashboard-view" class="main-container">
         <h1>เลือกระบบจัดการแข่งขัน</h1>
+        <div style="text-align: center; margin-bottom: 15px;" data-html2canvas-ignore>
+            <button onclick="exportAllToPDF()" style="background-color: #e64a19; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">Export PDF ทุกหน้า (ทุกประเภท)</button>
+        </div>
         <div id="cat-list"></div>
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
         <h3>สร้างประเภทการแข่งขันใหม่</h3>
@@ -82,20 +91,19 @@
         </div>
     </div>
 
-    <!-- ================= หน้าเข้าจัดการประเภทนั้นๆ ================= -->
+    <!-- ================= หน้าตั้งค่าและจัดการสาย ================= -->
     <div id="category-view" style="display: none;">
         
-        <div class="main-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;">
+        <div class="main-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 25px;">
             <h2 id="current-cat-title" style="margin: 0;"></h2>
             <button class="btn" style="background:#757575;" onclick="backToDashboard()">กลับไปหน้าหลัก</button>
         </div>
 
-        <!-- หน้าตั้งค่า (Setup) -->
-        <div class="container" id="main-setup-container" style="max-width: 800px; margin: 0 auto;">
+        <div class="main-container" id="main-setup-container">
             <h1>ตั้งค่าสายการแข่งขัน</h1>
             
             <div class="setup-section">
-                <h3>1. ระบุชื่อให้ชัดเจน</h3>
+                <h3>1. ระบุชื่อประเภท</h3>
                 <input type="text" id="tournament-category" placeholder="ตัวอย่าง: ชายคู่ มือ C, หญิงคู่ ทั่วไป" onchange="autoSave()">
             </div>
 
@@ -109,7 +117,16 @@
             </div>
 
             <div class="setup-section">
-                <h3>3. กำหนดทีมแข่งขัน (16 ทีม)</h3>
+                <h3>3. กำหนดรายชื่อกรรมการ</h3>
+                <div style="margin-bottom: 15px; text-align: center;">
+                    <label>จำนวนกรรมการทั้งหมด: </label>
+                    <input type="number" id="num-umpires" min="1" max="20" value="3" onchange="generateUmpireInputs(); autoSave();" style="width: 80px; padding: 5px; text-align: center; font-size: 16px;">
+                </div>
+                <div class="setup-grid" id="umpires-container"></div>
+            </div>
+
+            <div class="setup-section">
+                <h3>4. กำหนดทีมแข่งขัน (16 ทีม)</h3>
                 <p style="text-align: center; color: #666; font-size: 13px; margin-top: 0;">
                     ช่องที่เว้นว่างไว้จะถือเป็น "BYE" (ชนะผ่านอัตโนมัติ)<br>
                     ระบบจะจัดสรรสนามและทีมให้อย่างสมดุลอัตโนมัติ
@@ -122,43 +139,56 @@
             <button class="danger-btn" onclick="clearCurrentCategoryData()">ล้างข้อมูลสำหรับประเภทนี้ (เริ่มใหม่)</button>
         </div>
 
-        <!-- หน้าแสดงสายการแข่ง (Bracket) -->
+        <!-- หน้าแสดงสายการแข่ง (Bracket) แบบเต็มจอ -->
         <div id="bracket-screen">
-            <h1 id="display-category" style="margin-top: 0;">สายการแข่งขัน</h1>
-            
-            <div class="header-buttons">
-                <button onclick="resetApp()" style="background-color: #757575;">กลับไปตั้งค่า</button>
-                <button onclick="initApp(true)" style="background-color: #d32f2f;">สุ่มสายการแข่งใหม่อีกครั้ง</button>
-                <button onclick="exportToExcel()" style="background-color: #2e7d32;">Export เป็น Excel</button>
+            <div class="header-buttons" data-html2canvas-ignore>
+                <button onclick="resetApp()" style="background-color: #757575;">ย้อนกลับ</button>
+                <button onclick="initApp(true)" style="background-color: #d32f2f;">สุ่มสายใหม่</button>
+                <button onclick="exportToExcel()" style="background-color: #2e7d32;">Excel</button>
+                <button onclick="exportToJPG()" style="background-color: #1976d2;">Export JPG (A4 Landscape)</button>
+                <button onclick="exportToPDF()" style="background-color: #e64a19;">Export PDF (A4 Landscape)</button>
             </div>
             
-            <div class="bracket-wrapper" id="bracket-wrapper">
-                <svg id="lines-svg"></svg>
-                <div id="matches-container"></div>
+            <!-- Wrapper พื้นหลังสีขาว พร้อมแสดง Banner และชื่อประเภท -->
+            <div id="bracket-scroll-container" style="width: 100%; overflow-x: auto; position: relative;">
+                <div id="export-target" style="background-color: #FFFFFF; padding: 25px; min-width: 1560px; box-sizing: border-box;">
+                    
+                    <!-- Banner (Gemini_Generated_Image_77lnd577lnd577ln.png) -->
+                    <div style="width: 95%; max-width: 1400px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <img src="Gemini_Generated_Image_77lnd577lnd577ln.png" alt="Tournament Banner" style="width: 100%; display: block; object-fit: cover; max-height: 280px;" onerror="this.parentElement.style.display='none'">
+                    </div>
+                    
+                    <!-- ชื่อประเภทการแข่งขัน -->
+                    <h1 id="display-category" style="margin-top: 0; margin-bottom: 25px; text-align: center; color: #1f4e79; font-size: 28px;">สายการแข่งขัน</h1>
+                    
+                    <div class="bracket-wrapper" id="bracket-wrapper">
+                        <svg id="lines-svg"></svg>
+                        <div id="matches-container"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // ================= ตัวแปรระบบหลัก =================
         let currentCategory = "";
         const totalTeams = 16;
         let bracketState = {};
         
         const matchData = {
-            1:  { x: 20, y: 25 },    2:  { x: 20, y: 175 },   3:  { x: 20, y: 325 },   4:  { x: 20, y: 475 },
-            5:  { x: 20, y: 625 },   6:  { x: 20, y: 775 },   7:  { x: 20, y: 925 },   8:  { x: 20, y: 1075 },
-            13: { x: 290, y: 100 },  14: { x: 290, y: 400 },  15: { x: 290, y: 700 },  16: { x: 290, y: 1000 },
-            23: { x: 560, y: 250 },  24: { x: 560, y: 850 },
-            28: { x: 830, y: 550 },
-            9:  { x: 20, y: 1250 },  10: { x: 20, y: 1400 },  11: { x: 20, y: 1550 },  12: { x: 20, y: 1700 },
-            17: { x: 290, y: 1250 }, 18: { x: 290, y: 1400 }, 19: { x: 290, y: 1550 }, 20: { x: 290, y: 1700 },
-            21: { x: 560, y: 1325 }, 22: { x: 560, y: 1625 },
-            25: { x: 830, y: 1325 }, 26: { x: 830, y: 1625 },
-            27: { x: 1100, y: 1475 },
-            29: { x: 1370, y: 1475 },
-            'Final': { x: 1640, y: 1012 }
+            1:  { x: 16, y: 20 },    2:  { x: 16, y: 140 },   3:  { x: 16, y: 260 },   4:  { x: 16, y: 380 },
+            5:  { x: 16, y: 500 },   6:  { x: 16, y: 620 },   7:  { x: 16, y: 740 },   8:  { x: 16, y: 860 },
+            13: { x: 232, y: 80 },   14: { x: 232, y: 320 },  15: { x: 232, y: 560 },  16: { x: 232, y: 800 },
+            23: { x: 664, y: 200 },  24: { x: 664, y: 680 },
+            28: { x: 1096, y: 440 },
+            9:  { x: 16, y: 1120 },  10: { x: 16, y: 1240 },  11: { x: 16, y: 1360 },  12: { x: 16, y: 1480 },
+            17: { x: 232, y: 1120 }, 18: { x: 232, y: 1240 }, 19: { x: 232, y: 1360 }, 20: { x: 232, y: 1480 },
+            21: { x: 448, y: 1180 }, 22: { x: 448, y: 1420 },
+            25: { x: 664, y: 1180 }, 26: { x: 664, y: 1420 },
+            27: { x: 880, y: 1300 },
+            29: { x: 1096, y: 1300 },
+            'Final': { x: 1312, y: 810 }
         };
 
         const graph = {
@@ -194,7 +224,6 @@
             'Final': {}
         };
 
-        // ================= ระบบ Dashboard =================
         function createNewCategory() {
             const name = document.getElementById('new-cat-name').value.trim();
             if(!name) { alert("กรุณาใส่ชื่อประเภท"); return; }
@@ -233,7 +262,6 @@
                 cats = cats.filter(c => c !== name);
                 localStorage.setItem('badminton_categories', JSON.stringify(cats));
                 
-                // เคลียร์ข้อมูลลูกๆ ของประเภทนี้
                 localStorage.removeItem(`badminton_${name}_setup`);
                 localStorage.removeItem(`badminton_${name}_state`);
                 localStorage.removeItem(`badminton_${name}_screen`);
@@ -244,26 +272,18 @@
         function backToDashboard() {
             document.getElementById('dashboard-view').style.display = 'block';
             document.getElementById('category-view').style.display = 'none';
-            currentCategory = ""; // reset
+            currentCategory = "";
             renderDashboard();
         }
 
-        // ================= โหลดเข้าจัดการหมวดหมู่ที่เลือก =================
         function loadCategory(name) {
             currentCategory = name;
-            
-            // สลับหน้าจอ
             document.getElementById('dashboard-view').style.display = 'none';
             document.getElementById('category-view').style.display = 'block';
-            
-            // อัปเดต Title
             document.getElementById('current-cat-title').innerText = "ประเภท: " + name;
-            
-            // สั่งโหลดข้อมูลของสายการแข่งขันที่ผูกกับ currentCategory
             loadSavedData();
         }
 
-        // ================= ระบบจัดการแข่งขัน =================
         function generateCourtInputs() {
             let num = parseInt(document.getElementById('num-courts').value);
             if (isNaN(num) || num < 1) { num = 1; document.getElementById('num-courts').value = 1; }
@@ -273,8 +293,24 @@
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = `court-${i}`;
-                input.placeholder = `ชื่อ/หมายเลขสนาม ${i}`;
+                input.placeholder = `สนาม ${i}`;
                 input.value = `สนาม ${i}`;
+                input.addEventListener('change', autoSave);
+                container.appendChild(input);
+            }
+        }
+
+        function generateUmpireInputs() {
+            let num = parseInt(document.getElementById('num-umpires').value);
+            if (isNaN(num) || num < 1) { num = 1; document.getElementById('num-umpires').value = 1; }
+            const container = document.getElementById('umpires-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= num; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `umpire-${i}`;
+                input.placeholder = `กรรมการ ${i}`;
+                input.value = `กรรมการ ${i}`;
                 input.addEventListener('change', autoSave);
                 container.appendChild(input);
             }
@@ -298,7 +334,9 @@
             const setupData = {
                 category: document.getElementById('tournament-category').value,
                 numCourts: document.getElementById('num-courts').value,
+                numUmpires: document.getElementById('num-umpires').value,
                 courts: [],
+                umpires: [],
                 teams: []
             };
             
@@ -306,36 +344,56 @@
                 let el = document.getElementById(`court-${i}`);
                 if (el) setupData.courts.push(el.value);
             }
+            for (let i = 1; i <= setupData.numUmpires; i++) {
+                let el = document.getElementById(`umpire-${i}`);
+                if (el) setupData.umpires.push(el.value);
+            }
             for (let i = 1; i <= 16; i++) {
                 let el = document.getElementById(`team-${i}`);
                 if (el) setupData.teams.push(el.value);
             }
             
-            // ใช้ Key เฉพาะตัวของ Category
             localStorage.setItem(`badminton_${currentCategory}_setup`, JSON.stringify(setupData));
             localStorage.setItem(`badminton_${currentCategory}_state`, JSON.stringify(bracketState));
             localStorage.setItem(`badminton_${currentCategory}_screen`, document.getElementById('main-setup-container').style.display === 'none' ? 'bracket' : 'setup');
         }
 
+        window.autoSaveUmpire = function(mId) {
+            let el = document.getElementById(`m${mId}-umpire`);
+            if (bracketState[mId] && el) {
+                bracketState[mId].umpire = el.value;
+                autoSave();
+            }
+        };
+
         function loadSavedData() {
             document.getElementById('tournament-category').value = currentCategory;
             document.getElementById('num-courts').value = 3; 
+            document.getElementById('num-umpires').value = 3; 
             
             buildTeamInputs();
             generateCourtInputs();
+            generateUmpireInputs();
 
-            // ดึงข้อมูลที่เก็บตามชื่อ Category
             let savedSetup = localStorage.getItem(`badminton_${currentCategory}_setup`);
             if (savedSetup) {
                 let data = JSON.parse(savedSetup);
                 document.getElementById('tournament-category').value = data.category || currentCategory;
                 document.getElementById('num-courts').value = data.numCourts || 3;
+                document.getElementById('num-umpires').value = data.numUmpires || 3;
                 
                 generateCourtInputs();
                 for (let i = 0; i < data.courts.length; i++) {
                     let el = document.getElementById(`court-${i+1}`);
                     if (el) el.value = data.courts[i];
                 }
+                
+                generateUmpireInputs();
+                for (let i = 0; i < (data.umpires?.length || 0); i++) {
+                    let el = document.getElementById(`umpire-${i+1}`);
+                    if (el) el.value = data.umpires[i];
+                }
+
                 for (let i = 0; i < data.teams.length; i++) {
                     let el = document.getElementById(`team-${i+1}`);
                     if (el) el.value = data.teams[i];
@@ -368,7 +426,7 @@
                 localStorage.removeItem(`badminton_${currentCategory}_setup`);
                 localStorage.removeItem(`badminton_${currentCategory}_state`);
                 localStorage.removeItem(`badminton_${currentCategory}_screen`);
-                loadSavedData(); // รีโหลดค่าในหน้าจอใหม่ให้เป็นค่าว่าง
+                loadSavedData();
             }
         }
 
@@ -389,6 +447,14 @@
             }
             if (courtsList.length === 0) courtsList = ["สนามกลาง"];
 
+            let numUmpires = parseInt(document.getElementById('num-umpires').value) || 1;
+            let umpiresList = [];
+            for (let i = 1; i <= numUmpires; i++) {
+                let u = document.getElementById(`umpire-${i}`).value.trim();
+                if (u) umpiresList.push(u);
+            }
+            if (umpiresList.length === 0) umpiresList = ["กรรมการ"];
+
             let enteredTeams = [];
             for (let i = 1; i <= totalTeams; i++) {
                 let name = document.getElementById(`team-${i}`).value.trim();
@@ -399,6 +465,7 @@
             
             if (forceRandomize) {
                 enteredTeams = shuffleArray(enteredTeams);
+                umpiresList = shuffleArray(umpiresList);
             }
 
             const seedOrder = [ 1, 16, 8, 9, 4, 13, 5, 12, 2, 15, 7, 10, 3, 14, 6, 11 ];
@@ -414,7 +481,7 @@
             bracketState = {};
             for(let key in matchData) {
                 bracketState[key] = {
-                    t1: null, t2: null, winner: null, loser: null, court: null,
+                    t1: null, t2: null, winner: null, loser: null, court: null, umpire: null,
                     needsTieBreaker: false,
                     scores: { t1g1: '', t1g2: '', t2g1: '', t2g2: '', t1extra: '', t2extra: '' }
                 };
@@ -434,8 +501,10 @@
                 let isDefiniteBye = (st.t1 === 'BYE' || st.t2 === 'BYE');
                 if (st.winner || isDefiniteBye) {
                     st.court = null; 
+                    st.umpire = null;
                 } else {
                     st.court = courtsList[cIdx % courtsList.length];
+                    st.umpire = umpiresList[cIdx % umpiresList.length];
                     cIdx++;
                 }
             }
@@ -447,6 +516,7 @@
 
         function resumeBracket() {
             document.getElementById('main-setup-container').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'none';
             document.getElementById('bracket-screen').style.display = 'block';
             
             let cat = document.getElementById('tournament-category').value.trim();
@@ -506,9 +576,7 @@
 
         function confirmMatch(mId) {
             let st = bracketState[mId];
-            if(!st.t1 || !st.t2) {
-                alert("ต้องรอให้ทีมครบทั้งสองฝ่ายก่อน"); return;
-            }
+            if(!st.t1 || !st.t2) { alert("ต้องรอให้ทีมครบทั้งสองฝ่ายก่อน"); return; }
 
             let t1g1 = parseInt(document.getElementById(`m${mId}-t1g1`).value);
             let t1g2 = parseInt(document.getElementById(`m${mId}-t1g2`).value);
@@ -584,8 +652,8 @@
             const container = document.getElementById('matches-container');
             let html = '';
 
-            html += '<div class="bracket-title" style="left:20px; top: -10px;">Upper Bracket (สายบน)</div>';
-            html += '<div class="bracket-title" style="left:20px; top: 1200px;">Lower Bracket (สายล่าง)</div>';
+            html += '<div class="bracket-title" style="left:16px; top: -10px;">Upper Bracket (สายบน)</div>';
+            html += '<div class="bracket-title" style="left:16px; top: 1080px;">Lower Bracket (สายล่าง)</div>';
 
             for (let key in matchData) {
                 let d = matchData[key];
@@ -600,26 +668,33 @@
                 let matchTitle = key === 'Final' ? 'Grand Final' : 'Match ' + key;
                 let courtBadge = st.court ? `<span class="court-badge">${st.court}</span>` : '';
                 
-                let tieHtml1 = st.needsTieBreaker ? `<input type="number" id="m${key}-t1ex" class="score-input tie-breaker-input" placeholder="+" value="${st.scores.t1extra || ''}" ${st.winner ? 'disabled' : ''} onchange="autoSaveScores('${key}')" title="แต้มพิเศษ">` : '';
-                let tieHtml2 = st.needsTieBreaker ? `<input type="number" id="m${key}-t2ex" class="score-input tie-breaker-input" placeholder="+" value="${st.scores.t2extra || ''}" ${st.winner ? 'disabled' : ''} onchange="autoSaveScores('${key}')" title="แต้มพิเศษ">` : '';
+                let umpireInput = (!isBye && st.court) ? `<input type="text" id="m${key}-umpire" class="umpire-input" value="${st.umpire || ''}" onchange="autoSaveUmpire('${key}')" placeholder="กรรมการ">` : '';
+                let umpireTextDisplay = (!isBye && st.court) ? `<span class="umpire-text-export" style="display:none; color:#fff; font-size:10px; margin-right:5px;">${st.umpire || ''}</span>` : '';
+                
+                let tieHtml1 = st.needsTieBreaker ? `<input type="number" id="m${key}-t1ex" class="score-input tie-breaker-input" value="${st.scores.t1extra || ''}" ${st.winner ? 'disabled' : ''} onchange="autoSaveScores('${key}')" title="แต้มพิเศษ">` : '';
+                let tieHtml2 = st.needsTieBreaker ? `<input type="number" id="m${key}-t2ex" class="score-input tie-breaker-input" value="${st.scores.t2extra || ''}" ${st.winner ? 'disabled' : ''} onchange="autoSaveScores('${key}')" title="แต้มพิเศษ">` : '';
 
                 html += `<div class="match-box" style="left:${d.x}px; top:${d.y}px;">
                     <div class="match-header">
-                        <span>${matchTitle}</span>
-                        ${courtBadge}
+                        <span style="white-space:nowrap;">${matchTitle}</span>
+                        <div style="display:flex; align-items:center;">
+                            ${umpireInput}
+                            ${umpireTextDisplay}
+                            ${courtBadge}
+                        </div>
                     </div>
                     
                     <div class="team-row">
                         <div class="team-name" title="${t1Name}">${t1Name}</div>
-                        <input type="number" id="m${key}-t1g1" class="score-input" placeholder="G1" value="${st.scores.t1g1}" ${disableAttr} onchange="autoSaveScores('${key}')">
-                        <input type="number" id="m${key}-t1g2" class="score-input" placeholder="G2" value="${st.scores.t1g2}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        <input type="number" id="m${key}-t1g1" class="score-input" value="${st.scores.t1g1}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        <input type="number" id="m${key}-t1g2" class="score-input" value="${st.scores.t1g2}" ${disableAttr} onchange="autoSaveScores('${key}')">
                         ${tieHtml1}
                     </div>
                     
                     <div class="team-row">
                         <div class="team-name" title="${t2Name}">${t2Name}</div>
-                        <input type="number" id="m${key}-t2g1" class="score-input" placeholder="G1" value="${st.scores.t2g1}" ${disableAttr} onchange="autoSaveScores('${key}')">
-                        <input type="number" id="m${key}-t2g2" class="score-input" placeholder="G2" value="${st.scores.t2g2}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        <input type="number" id="m${key}-t2g1" class="score-input" value="${st.scores.t2g1}" ${disableAttr} onchange="autoSaveScores('${key}')">
+                        <input type="number" id="m${key}-t2g2" class="score-input" value="${st.scores.t2g2}" ${disableAttr} onchange="autoSaveScores('${key}')">
                         ${tieHtml2}
                     </div>`;
                 
@@ -627,12 +702,12 @@
                     let winText = isBye ? 'ชนะผ่าน (BYE)' : `Winner: ${st.winner}`;
                     html += `<div style="display:flex; justify-content:space-between; align-items:flex-end;">
                                 <span class="status-text">${winText}</span>
-                                ${!isBye ? `<button class="edit-btn" onclick="editMatch('${key}')">แก้ไข</button>` : ''}
+                                ${!isBye ? `<button class="edit-btn" onclick="editMatch('${key}')" data-html2canvas-ignore>แก้ไข</button>` : ''}
                              </div>`;
                 } else if (!isBye) {
                     let btnDisabled = isWaiting ? 'style="background-color: #ccc; cursor: not-allowed;" disabled' : '';
                     let btnText = isWaiting ? 'รอผลคู่ก่อนหน้า' : 'ยืนยันผล';
-                    html += `<button class="confirm-btn" onclick="confirmMatch('${key}')" ${btnDisabled}>${btnText}</button>`;
+                    html += `<button class="confirm-btn" onclick="confirmMatch('${key}')" ${btnDisabled} data-html2canvas-ignore>${btnText}</button>`;
                 }
                 
                 html += `</div>`;
@@ -657,8 +732,8 @@
         function drawLines() {
             const svg = document.getElementById('lines-svg');
             let svgHtml = '';
-            const boxW = 230; 
-            const halfH = 67; 
+            const boxW = 190; 
+            const halfH = 57; 
             
             function drawPath(x1, y1, x2, y2) {
                 const midX = x1 + (x2 - x1) / 2;
@@ -666,7 +741,7 @@
             }
 
             function drawDropIcon(x, y) {
-                return `<path d="M ${x-15} ${y-15} L ${x-15} ${y} L ${x} ${y}" stroke="#d32f2f" stroke-width="2.5" fill="none" stroke-dasharray="5"/>`;
+                return `<path d="M ${x-12} ${y-12} L ${x-12} ${y} L ${x} ${y}" stroke="#d32f2f" stroke-width="2.5" fill="none" stroke-dasharray="5"/>`;
             }
 
             for (let key in graph) {
@@ -678,7 +753,7 @@
                 if (nw) {
                     let target = matchData[nw.id];
                     let endX = target.x;
-                    let endY = target.y + (nw.slot === 't1' ? 45 : 90);
+                    let endY = target.y + (nw.slot === 't1' ? 38 : 76);
                     svgHtml += drawPath(startX, startY, endX, endY);
                 }
 
@@ -686,11 +761,13 @@
                 if (nl) {
                     let target = matchData[nl.id];
                     let endX = target.x;
-                    let endY = target.y + (nl.slot === 't1' ? 45 : 90);
+                    let endY = target.y + (nl.slot === 't1' ? 38 : 76);
+                    
+                    let isVerticalDropToFirstLoserRound = (parseInt(key) >= 1 && parseInt(key) <= 8);
                     
                     if (nl.isDrop) {
                         svgHtml += drawDropIcon(endX, endY);
-                    } else {
+                    } else if (!isVerticalDropToFirstLoserRound) {
                         svgHtml += drawPath(startX, startY, endX, endY);
                     }
                 }
@@ -709,6 +786,7 @@
                         "Match No.": key === 'Final' ? 'Final' : parseInt(key),
                         "Category": cat,
                         "Court": st.court || '-',
+                        "Umpire": st.umpire || '-',
                         "Team 1": st.t1,
                         "G1 (T1)": st.scores.t1g1,
                         "G2 (T1)": st.scores.t1g2,
@@ -739,9 +817,203 @@
             XLSX.writeFile(wb, `${cat}_Results.xlsx`);
         }
 
-        // ================= เริ่มทำงานเมื่อโหลดหน้าจอ =================
+        function prepareForExport() {
+            document.querySelectorAll('.umpire-input').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.umpire-text-export').forEach(el => el.style.display = 'inline-block');
+        }
+
+        function restoreAfterExport() {
+            document.querySelectorAll('.umpire-input').forEach(el => el.style.display = 'inline-block');
+            document.querySelectorAll('.umpire-text-export').forEach(el => el.style.display = 'none');
+        }
+
+        function exportToJPG() {
+            try {
+                document.body.style.cursor = 'wait';
+                prepareForExport();
+                
+                const wrapper = document.getElementById('export-target');
+                let scrollEl = document.getElementById('bracket-scroll-container');
+                let oldOverflow = scrollEl.style.overflowX;
+                scrollEl.style.overflowX = 'visible';
+
+                html2canvas(wrapper, { scale: 1.2, useCORS: true, allowTaint: true }).then(canvas => {
+                    scrollEl.style.overflowX = oldOverflow;
+                    restoreAfterExport();
+                    
+                    const targetCanvas = document.createElement('canvas');
+                    const ctx = targetCanvas.getContext('2d');
+                    
+                    const a4Ratio = 297 / 210;
+                    let cWidth = canvas.width;
+                    let cHeight = canvas.height;
+                    let drawWidth = cWidth;
+                    let drawHeight = cWidth / a4Ratio;
+
+                    if (drawHeight < cHeight) {
+                        drawHeight = cHeight;
+                        drawWidth = cHeight * a4Ratio;
+                    }
+
+                    targetCanvas.width = drawWidth;
+                    targetCanvas.height = drawHeight;
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, drawWidth, drawHeight);
+                    
+                    let xOffset = (drawWidth - cWidth) / 2;
+                    let yOffset = (drawHeight - cHeight) / 2;
+                    ctx.drawImage(canvas, xOffset, yOffset);
+
+                    const imageURI = targetCanvas.toDataURL('image/jpeg', 0.90);
+                    let link = document.createElement('a');
+                    link.download = `${currentCategory || 'Tournament'}_Bracket.jpg`;
+                    link.href = imageURI;
+                    link.click();
+                    document.body.style.cursor = 'default';
+                }).catch(err => {
+                    scrollEl.style.overflowX = oldOverflow;
+                    restoreAfterExport();
+                    document.body.style.cursor = 'default';
+                    alert("เกิดข้อผิดพลาดในการ Export: " + err);
+                });
+            } catch (e) {
+                document.body.style.cursor = 'default';
+                alert("เกิดข้อผิดพลาด: " + e.message);
+            }
+        }
+
+        function exportToPDF() {
+            try {
+                document.body.style.cursor = 'wait';
+                prepareForExport();
+                
+                const wrapper = document.getElementById('export-target');
+                let scrollEl = document.getElementById('bracket-scroll-container');
+                let oldOverflow = scrollEl.style.overflowX;
+                scrollEl.style.overflowX = 'visible'; 
+                
+                html2canvas(wrapper, { scale: 1.2, useCORS: true, allowTaint: true }).then(canvas => {
+                    scrollEl.style.overflowX = oldOverflow;
+                    restoreAfterExport();
+                    
+                    const imgData = canvas.toDataURL('image/jpeg', 0.90);
+                    
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('l', 'mm', 'a4'); // A4 Landscape
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+                    
+                    const ratio = Math.min((pageWidth - 10) / imgWidth, (pageHeight - 10) / imgHeight);
+                    const finalWidth = imgWidth * ratio;
+                    const finalHeight = imgHeight * ratio;
+                    
+                    const xOffset = (pageWidth - finalWidth) / 2;
+                    const yOffset = (pageHeight - finalHeight) / 2;
+
+                    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, finalWidth, finalHeight);
+                    pdf.save(`${currentCategory || 'Tournament'}_Bracket.pdf`);
+                    document.body.style.cursor = 'default';
+                }).catch(err => {
+                    scrollEl.style.overflowX = oldOverflow;
+                    restoreAfterExport();
+                    document.body.style.cursor = 'default';
+                    alert("เกิดข้อผิดพลาดในการ Export: " + err);
+                });
+            } catch (e) {
+                document.body.style.cursor = 'default';
+                alert("เกิดข้อผิดพลาด: " + e.message);
+            }
+        }
+
+        async function exportAllToPDF() {
+            let cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
+            if (cats.length === 0) {
+                alert("ยังไม่มีประเภทการแข่งขันในระบบ");
+                return;
+            }
+
+            let prevCategory = currentCategory;
+            let wasDashboard = document.getElementById('dashboard-view').style.display !== 'none';
+
+            try {
+                document.body.style.cursor = 'wait';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('l', 'mm', 'a4'); 
+                let isFirstPage = true;
+
+                for (let i = 0; i < cats.length; i++) {
+                    let catName = cats[i];
+                    loadCategory(catName);
+
+                    document.getElementById('main-setup-container').style.display = 'block';
+                    document.getElementById('bracket-screen').style.display = 'none';
+                    
+                    await new Promise(r => setTimeout(r, 200));
+                    let setupCanvas = await html2canvas(document.getElementById('main-setup-container'), { scale: 1.2, useCORS: true, allowTaint: true });
+                    
+                    if (!isFirstPage) pdf.addPage();
+                    isFirstPage = false;
+                    
+                    let pWidth = pdf.internal.pageSize.getWidth();
+                    let pHeight = pdf.internal.pageSize.getHeight();
+                    let sImgWidth = setupCanvas.width;
+                    let sImgHeight = setupCanvas.height;
+                    let sRatio = Math.min((pWidth - 10) / sImgWidth, (pHeight - 15) / sImgHeight);
+                    let sfWidth = sImgWidth * sRatio;
+                    let sfHeight = sImgHeight * sRatio;
+                    let sxOff = (pWidth - sfWidth) / 2;
+                    let syOff = (pHeight - sfHeight) / 2;
+
+                    pdf.addImage(setupCanvas.toDataURL('image/jpeg', 0.9), 'JPEG', sxOff, syOff, sfWidth, sfHeight);
+
+                    if (Object.keys(bracketState).length > 0) {
+                        resumeBracket();
+                        await new Promise(r => setTimeout(r, 300));
+                        
+                        prepareForExport();
+                        let wrapper = document.getElementById('export-target');
+                        let scrollEl = document.getElementById('bracket-scroll-container');
+                        let oldOverflow = scrollEl.style.overflowX;
+                        scrollEl.style.overflowX = 'visible';
+                        
+                        let bracketCanvas = await html2canvas(wrapper, { scale: 1.2, useCORS: true, allowTaint: true });
+                        scrollEl.style.overflowX = oldOverflow;
+                        restoreAfterExport();
+
+                        pdf.addPage();
+                        let bImgWidth = bracketCanvas.width;
+                        let bImgHeight = bracketCanvas.height;
+                        let bRatio = Math.min((pWidth - 10) / bImgWidth, (pHeight - 10) / bImgHeight);
+                        let bfWidth = bImgWidth * bRatio;
+                        let bfHeight = bImgHeight * bRatio;
+                        let bxOff = (pWidth - bfWidth) / 2;
+                        let byOff = (pHeight - bfHeight) / 2;
+
+                        pdf.addImage(bracketCanvas.toDataURL('image/jpeg', 0.9), 'JPEG', bxOff, byOff, bfWidth, bfHeight);
+                    }
+                }
+
+                pdf.save(`All_Tournaments_Report.pdf`);
+                
+            } catch (err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาดในการ Export: " + err);
+            } finally {
+                document.body.style.cursor = 'default';
+                if (wasDashboard) {
+                    backToDashboard();
+                } else if (prevCategory) {
+                    loadCategory(prevCategory);
+                }
+            }
+        }
+
         window.onload = function() {
-            renderDashboard(); // โหลดหน้า Dashboard เป็นอันดับแรก
+            renderDashboard();
         };
     </script>
 </body>
