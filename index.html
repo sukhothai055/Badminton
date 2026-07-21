@@ -23,6 +23,16 @@
             box-sizing: inherit;
         }
 
+        /* ซ่อนปุ่มลูกศรเพิ่ม/ลด (+/-) ของ input number ในทุก Browser */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         h1, h2, h3 { text-align: center; color: #1f4e79; }
         
         .main-container { width: 95%; max-width: 1400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -47,25 +57,25 @@
         .header-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px auto; }
         .header-buttons button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 13px; }
         
-        .bracket-wrapper { position: relative; width: 1520px; height: 1650px; margin: 0 auto; }
+        .bracket-wrapper { position: relative; width: 1650px; height: 1650px; margin: 0 auto; }
         
-        /* ขยายความกว้างกล่องแมตช์ให้พอดีกับช่องคะแนนที่ไม่ทับกัน */
-        .match-box { position: absolute; width: 220px; height: 115px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 5px; }
-        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -5px -5px 5px -5px; border-radius: 4px 4px 0 0; padding: 3px 6px; font-size: 11px; font-weight: bold; }
+        .match-box { position: absolute; width: 250px; height: 120px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 6px; }
+        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -6px -6px 6px -6px; border-radius: 4px 4px 0 0; padding: 4px 8px; font-size: 11px; font-weight: bold; }
         
-        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 60px; text-align: right; margin-right: 5px; }
+        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 65px; text-align: right; margin-right: 5px; }
         .umpire-input::placeholder { color: #ddd; }
         .umpire-input:focus { background: #fff; color: #333; outline: none; }
         
         .court-badge { background: #ff9800; color: #fff; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
         .team-row { display: flex; align-items: center; margin-bottom: 5px; }
         
-        .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: bold; }
-        /* ขยายความกว้างช่องคะแนนเป็น 42px เพื่อไม่ให้ตัวเลขซ้อนกัน */
-        .score-input { width: 42px; height: 24px; margin-left: 3px; text-align: center; border: 1px solid #aaa; border-radius: 3px; font-size: 12px; font-weight: bold; }
-        .score-input:focus { border-color: #1f4e79; outline: none; }
-        .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; }
+        .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: bold; padding-right: 4px; }
+        
+        .score-input { width: 48px; height: 26px; margin-left: 3px; text-align: center; border: 1px solid #777; border-radius: 4px; font-size: 14px; font-weight: bold; background-color: #fff; color: #000; }
+        .score-input:focus { border-color: #1f4e79; outline: none; background-color: #eef3f9; }
+        .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; border-color: #ccc; }
         .tie-breaker-input { border: 2px solid #ff9800; background-color: #fff3e0; color: #d32f2f; }
+        
         .confirm-btn { margin-top: auto; font-size: 12px; padding: 5px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .confirm-btn:hover { background: #45a049; }
         .status-text { margin-top: auto; font-size: 12px; text-align: center; color: #d32f2f; font-weight: bold; }
@@ -150,10 +160,10 @@
             </div>
             
             <div id="bracket-scroll-container" style="width: 100%; overflow-x: auto; position: relative;">
-                <div id="export-target" style="background-color: #FFFFFF; padding: 25px; min-width: 1560px; box-sizing: border-box;">
+                <div id="export-target" style="background-color: #FFFFFF; padding: 25px; min-width: 1700px; box-sizing: border-box;">
                     
                     <!-- Banner -->
-                    <div style="width: 95%; max-width: 1400px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="width: 95%; max-width: 1500px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                         <img src="Gemini_Generated_Image_77lnd577lnd577ln.png" alt="Tournament Banner" style="width: 100%; display: block; object-fit: cover; max-height: 280px;" onerror="this.parentElement.style.display='none'">
                     </div>
                     
@@ -177,18 +187,18 @@
         let bracketState = {};
         
         const matchData = {
-            1:  { x: 16, y: 20 },    2:  { x: 16, y: 140 },   3:  { x: 16, y: 260 },   4:  { x: 16, y: 380 },
-            5:  { x: 16, y: 500 },   6:  { x: 16, y: 620 },   7:  { x: 16, y: 740 },   8:  { x: 16, y: 860 },
-            13: { x: 250, y: 80 },   14: { x: 250, y: 320 },  15: { x: 250, y: 560 },  16: { x: 250, y: 800 },
-            23: { x: 700, y: 200 },  24: { x: 700, y: 680 },
-            28: { x: 1150, y: 440 },
-            9:  { x: 16, y: 1120 },  10: { x: 16, y: 1240 },  11: { x: 16, y: 1360 },  12: { x: 16, y: 1480 },
-            17: { x: 250, y: 1120 }, 18: { x: 250, y: 1240 }, 19: { x: 250, y: 1360 }, 20: { x: 250, y: 1480 },
-            21: { x: 480, y: 1180 }, 22: { x: 480, y: 1420 },
-            25: { x: 700, y: 1180 }, 26: { x: 700, y: 1420 },
-            27: { x: 920, y: 1300 },
-            29: { x: 1150, y: 1300 },
-            'Final': { x: 1380, y: 810 }
+            1:  { x: 16, y: 20 },    2:  { x: 16, y: 150 },   3:  { x: 16, y: 280 },   4:  { x: 16, y: 410 },
+            5:  { x: 16, y: 540 },   6:  { x: 16, y: 670 },   7:  { x: 16, y: 800 },   8:  { x: 16, y: 930 },
+            13: { x: 290, y: 85 },   14: { x: 290, y: 345 },  15: { x: 290, y: 605 },  16: { x: 290, y: 865 },
+            23: { x: 760, y: 215 },  24: { x: 760, y: 735 },
+            28: { x: 1230, y: 475 },
+            9:  { x: 16, y: 1180 },  10: { x: 16, y: 1310 },  11: { x: 16, y: 1440 },  12: { x: 16, y: 1570 },
+            17: { x: 290, y: 1180 }, 18: { x: 290, y: 1310 }, 19: { x: 290, y: 1440 }, 20: { x: 290, y: 1570 },
+            21: { x: 520, y: 1245 }, 22: { x: 520, y: 1505 },
+            25: { x: 760, y: 1245 }, 26: { x: 760, y: 1505 },
+            27: { x: 990, y: 1375 },
+            29: { x: 1230, y: 1375 },
+            'Final': { x: 1460, y: 875 }
         };
 
         const graph = {
@@ -700,7 +710,7 @@
             let html = '';
 
             html += '<div class="bracket-title" style="left:16px; top: -10px;">Upper Bracket (สายบน)</div>';
-            html += '<div class="bracket-title" style="left:16px; top: 1080px;">Lower Bracket (สายล่าง)</div>';
+            html += '<div class="bracket-title" style="left:16px; top: 1150px;">Lower Bracket (สายล่าง)</div>';
 
             for (let key in matchData) {
                 let d = matchData[key];
@@ -779,8 +789,8 @@
         function drawLines() {
             const svg = document.getElementById('lines-svg');
             let svgHtml = '';
-            const boxW = 220; 
-            const halfH = 57; 
+            const boxW = 250; 
+            const halfH = 60; 
             
             function drawPath(x1, y1, x2, y2) {
                 const midX = x1 + (x2 - x1) / 2;
@@ -800,7 +810,7 @@
                 if (nw) {
                     let target = matchData[nw.id];
                     let endX = target.x;
-                    let endY = target.y + (nw.slot === 't1' ? 38 : 76);
+                    let endY = target.y + (nw.slot === 't1' ? 40 : 80);
                     svgHtml += drawPath(startX, startY, endX, endY);
                 }
 
@@ -808,7 +818,7 @@
                 if (nl) {
                     let target = matchData[nl.id];
                     let endX = target.x;
-                    let endY = target.y + (nl.slot === 't1' ? 38 : 76);
+                    let endY = target.y + (nl.slot === 't1' ? 40 : 80);
                     
                     let isVerticalDropToFirstLoserRound = (parseInt(key) >= 1 && parseInt(key) <= 8);
                     
