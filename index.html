@@ -6,6 +6,7 @@
     <title>ระบบจัดการแข่งขันแบดมินตัน (Multi-Category & 16 Teams)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        /* ================= CSS ทั้งหมด ================= */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0; padding: 20px; background-color: #f4f7f6; color: #333;
@@ -15,9 +16,11 @@
         .main-container { max-width: 800px; margin: 0 auto 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
+        /* Dashboard Styles */
         .cat-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
         .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; margin-left: 5px; font-size: 14px; }
         
+        /* Setup Styles */
         .setup-section { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
         .setup-section h3 { margin-top: 0; }
         .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
@@ -29,9 +32,14 @@
         button.danger-btn { background-color: #d32f2f; color: white; border: none; padding: 10px; font-size: 14px; border-radius: 5px; cursor: pointer; width: 100%; }
         button.danger-btn:hover { background-color: #b71c1c; }
 
+        /* Bracket Styles */
         #bracket-screen { display: none; overflow-x: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
-        .banner-container { width: 100%; border-radius: 10px 10px 0 0; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Banner Styles (อัปเดตให้แสดงทุกหน้า) */
+        .global-banner-wrapper { max-width: 800px; margin: 0 auto 20px auto; }
+        .banner-container { width: 100%; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .banner-container img { width: 100%; display: block; object-fit: cover; }
+        
         .header-buttons { display: flex; gap: 10px; max-width: 600px; margin: 0 auto 20px auto; }
         .header-buttons button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
         
@@ -54,6 +62,13 @@
     </style>
 </head>
 <body>
+
+    <!-- ================= Banner สำหรับทุกหน้า ================= -->
+    <div class="global-banner-wrapper">
+        <div class="banner-container">
+            <img src="Gemini_Generated_Image_77lnd577lnd577ln.png" alt="Tournament Banner" onerror="this.style.display='none'">
+        </div>
+    </div>
 
     <!-- ================= หน้า Dashboard เลือกประเภท ================= -->
     <div id="dashboard-view" class="main-container">
@@ -109,10 +124,6 @@
 
         <!-- หน้าแสดงสายการแข่ง (Bracket) -->
         <div id="bracket-screen">
-            <div class="banner-container">
-                <img src="1784518317719.jpg" alt="Tournament Banner" onerror="this.style.display='none'">
-            </div>
-
             <h1 id="display-category" style="margin-top: 0;">สายการแข่งขัน</h1>
             
             <div class="header-buttons">
@@ -307,7 +318,6 @@
         }
 
         function loadSavedData() {
-            // FIX: บังคับเคลียร์ค่าใน DOM กลับไปเป็นค่าเริ่มต้นก่อน (ป้องกันการดึงค่าจากประเภทอื่นมาแสดง)
             document.getElementById('tournament-category').value = currentCategory;
             document.getElementById('num-courts').value = 3; 
             
