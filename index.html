@@ -49,10 +49,11 @@
         
         .bracket-wrapper { position: relative; width: 1520px; height: 1650px; margin: 0 auto; }
         
-        .match-box { position: absolute; width: 190px; height: 115px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 5px; }
+        /* ขยายความกว้างกล่องแมตช์ให้พอดีกับช่องคะแนนที่ไม่ทับกัน */
+        .match-box { position: absolute; width: 220px; height: 115px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 5px; }
         .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -5px -5px 5px -5px; border-radius: 4px 4px 0 0; padding: 3px 6px; font-size: 11px; font-weight: bold; }
         
-        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 55px; text-align: right; margin-right: 5px; }
+        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 60px; text-align: right; margin-right: 5px; }
         .umpire-input::placeholder { color: #ddd; }
         .umpire-input:focus { background: #fff; color: #333; outline: none; }
         
@@ -60,7 +61,8 @@
         .team-row { display: flex; align-items: center; margin-bottom: 5px; }
         
         .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: bold; }
-        .score-input { width: 30px; height: 24px; margin-left: 4px; text-align: center; border: 1px solid #aaa; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        /* ขยายความกว้างช่องคะแนนเป็น 42px เพื่อไม่ให้ตัวเลขซ้อนกัน */
+        .score-input { width: 42px; height: 24px; margin-left: 3px; text-align: center; border: 1px solid #aaa; border-radius: 3px; font-size: 12px; font-weight: bold; }
         .score-input:focus { border-color: #1f4e79; outline: none; }
         .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; }
         .tie-breaker-input { border: 2px solid #ff9800; background-color: #fff3e0; color: #d32f2f; }
@@ -168,7 +170,6 @@
     </div>
 
     <script>
-        // URL Google Apps Script Web App ที่เชื่อมกับ Google Sheets ของคุณ
         const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbyO9Qh2G--yoOnhYBa9KS4CR3_6pLbeyBxwxQOH4aMTviKhCqIikK3IuBUX5aDmWtfofg/exec";
 
         let currentCategory = "";
@@ -178,16 +179,16 @@
         const matchData = {
             1:  { x: 16, y: 20 },    2:  { x: 16, y: 140 },   3:  { x: 16, y: 260 },   4:  { x: 16, y: 380 },
             5:  { x: 16, y: 500 },   6:  { x: 16, y: 620 },   7:  { x: 16, y: 740 },   8:  { x: 16, y: 860 },
-            13: { x: 232, y: 80 },   14: { x: 232, y: 320 },  15: { x: 232, y: 560 },  16: { x: 232, y: 800 },
-            23: { x: 664, y: 200 },  24: { x: 664, y: 680 },
-            28: { x: 1096, y: 440 },
+            13: { x: 250, y: 80 },   14: { x: 250, y: 320 },  15: { x: 250, y: 560 },  16: { x: 250, y: 800 },
+            23: { x: 700, y: 200 },  24: { x: 700, y: 680 },
+            28: { x: 1150, y: 440 },
             9:  { x: 16, y: 1120 },  10: { x: 16, y: 1240 },  11: { x: 16, y: 1360 },  12: { x: 16, y: 1480 },
-            17: { x: 232, y: 1120 }, 18: { x: 232, y: 1240 }, 19: { x: 232, y: 1360 }, 20: { x: 232, y: 1480 },
-            21: { x: 448, y: 1180 }, 22: { x: 448, y: 1420 },
-            25: { x: 664, y: 1180 }, 26: { x: 664, y: 1420 },
-            27: { x: 880, y: 1300 },
-            29: { x: 1096, y: 1300 },
-            'Final': { x: 1312, y: 810 }
+            17: { x: 250, y: 1120 }, 18: { x: 250, y: 1240 }, 19: { x: 250, y: 1360 }, 20: { x: 250, y: 1480 },
+            21: { x: 480, y: 1180 }, 22: { x: 480, y: 1420 },
+            25: { x: 700, y: 1180 }, 26: { x: 700, y: 1420 },
+            27: { x: 920, y: 1300 },
+            29: { x: 1150, y: 1300 },
+            'Final': { x: 1380, y: 810 }
         };
 
         const graph = {
@@ -229,7 +230,6 @@
             
             document.body.style.cursor = 'wait';
             try {
-                // เซฟค่าเริ่มต้นเปล่าๆ ขึ้น Cloud เพื่อสร้างชีทใหม่
                 await fetch(CLOUD_API_URL, {
                     method: "POST",
                     mode: "no-cors",
@@ -243,7 +243,7 @@
                     })
                 });
                 document.getElementById('new-cat-name').value = '';
-                setTimeout(renderDashboard, 1000); // รอสักครู่ให้ Cloud บันทึกเสร็จแล้วโหลดใหม่
+                setTimeout(renderDashboard, 1000);
             } catch (err) {
                 alert("เกิดข้อผิดพลาดในการสร้างหมวดหมู่บน Cloud");
             } finally {
@@ -779,7 +779,7 @@
         function drawLines() {
             const svg = document.getElementById('lines-svg');
             let svgHtml = '';
-            const boxW = 190; 
+            const boxW = 220; 
             const halfH = 57; 
             
             function drawPath(x1, y1, x2, y2) {
