@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการแข่งขันแบดมินตัน (Full Screen & Multi-Export)</title>
+    <title>ระบบจัดการแข่งขันแบดมินตัน (Cloud Multi-Device)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -47,10 +47,8 @@
         .header-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px auto; }
         .header-buttons button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 13px; }
         
-        /* ขนาดโครงสร้างสายที่ถูกย่อลง */
         .bracket-wrapper { position: relative; width: 1520px; height: 1650px; margin: 0 auto; }
         
-        /* ย่อขนาดกล่องแมตช์การแข่งขัน */
         .match-box { position: absolute; width: 190px; height: 115px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 5px; }
         .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -5px -5px 5px -5px; border-radius: 4px 4px 0 0; padding: 3px 6px; font-size: 11px; font-weight: bold; }
         
@@ -78,11 +76,11 @@
 
     <!-- ================= หน้า Dashboard เลือกประเภท ================= -->
     <div id="dashboard-view" class="main-container">
-        <h1>เลือกระบบจัดการแข่งขัน</h1>
+        <h1>เลือกระบบจัดการแข่งขัน (Cloud Sync)</h1>
         <div style="text-align: center; margin-bottom: 15px;" data-html2canvas-ignore>
             <button onclick="exportAllToPDF()" style="background-color: #e64a19; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">Export PDF ทุกหน้า (ทุกประเภท)</button>
         </div>
-        <div id="cat-list"></div>
+        <div id="cat-list"><p style="color:#777; text-align:center;">กำลังโหลดข้อมูลจาก Cloud...</p></div>
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
         <h3>สร้างประเภทการแข่งขันใหม่</h3>
         <div style="display: flex; gap: 10px;">
@@ -134,7 +132,7 @@
                 <div class="setup-grid" id="inputs-container"></div>
             </div>
 
-            <button id="btn-resume" class="primary-btn" style="background-color: #2e7d32; display: none;" onclick="resumeBracket()">ดูสายการแข่งขันปัจจุบัน (ที่บันทึกไว้)</button>
+            <button id="btn-resume" class="primary-btn" style="background-color: #2e7d32; display: none;" onclick="resumeBracket()">ดูสายการแข่งขันปัจจุบัน (บน Cloud)</button>
             <button class="primary-btn" onclick="initApp(true)">สร้างและสุ่มสายการแข่งขันใหม่</button>
             <button class="danger-btn" onclick="clearCurrentCategoryData()">ล้างข้อมูลสำหรับประเภทนี้ (เริ่มใหม่)</button>
         </div>
@@ -149,16 +147,14 @@
                 <button onclick="exportToPDF()" style="background-color: #e64a19;">Export PDF (A4 Landscape)</button>
             </div>
             
-            <!-- Wrapper พื้นหลังสีขาว พร้อมแสดง Banner และชื่อประเภท -->
             <div id="bracket-scroll-container" style="width: 100%; overflow-x: auto; position: relative;">
                 <div id="export-target" style="background-color: #FFFFFF; padding: 25px; min-width: 1560px; box-sizing: border-box;">
                     
-                    <!-- Banner (Gemini_Generated_Image_77lnd577lnd577ln.png) -->
+                    <!-- Banner -->
                     <div style="width: 95%; max-width: 1400px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                         <img src="Gemini_Generated_Image_77lnd577lnd577ln.png" alt="Tournament Banner" style="width: 100%; display: block; object-fit: cover; max-height: 280px;" onerror="this.parentElement.style.display='none'">
                     </div>
                     
-                    <!-- ชื่อประเภทการแข่งขัน -->
                     <h1 id="display-category" style="margin-top: 0; margin-bottom: 25px; text-align: center; color: #1f4e79; font-size: 28px;">สายการแข่งขัน</h1>
                     
                     <div class="bracket-wrapper" id="bracket-wrapper">
@@ -172,6 +168,9 @@
     </div>
 
     <script>
+        // URL Google Apps Script Web App ที่เชื่อมกับ Google Sheets ของคุณ
+        const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbyO9Qh2G--yoOnhYBa9KS4CR3_6pLbeyBxwxQOH4aMTviKhCqIikK3IuBUX5aDmWtfofg/exec";
+
         let currentCategory = "";
         const totalTeams = 16;
         let bracketState = {};
@@ -224,48 +223,78 @@
             'Final': {}
         };
 
-        function createNewCategory() {
+        async function createNewCategory() {
             const name = document.getElementById('new-cat-name').value.trim();
             if(!name) { alert("กรุณาใส่ชื่อประเภท"); return; }
-            let cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
-            if(!cats.includes(name)) {
-                cats.push(name);
-                localStorage.setItem('badminton_categories', JSON.stringify(cats));
+            
+            document.body.style.cursor = 'wait';
+            try {
+                // เซฟค่าเริ่มต้นเปล่าๆ ขึ้น Cloud เพื่อสร้างชีทใหม่
+                await fetch(CLOUD_API_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ 
+                        action: "saveData", 
+                        category: name, 
+                        setup: { category: name, numCourts: 3, numUmpires: 3, courts: ["สนาม 1","สนาม 2","สนาม 3"], umpires: ["กรรมการ 1","กรรมการ 2","กรรมการ 3"], teams: [] }, 
+                        state: {}, 
+                        screen: "setup" 
+                    })
+                });
                 document.getElementById('new-cat-name').value = '';
-            } else {
-                alert("มีชื่อประเภทนี้อยู่แล้ว!");
+                setTimeout(renderDashboard, 1000); // รอสักครู่ให้ Cloud บันทึกเสร็จแล้วโหลดใหม่
+            } catch (err) {
+                alert("เกิดข้อผิดพลาดในการสร้างหมวดหมู่บน Cloud");
+            } finally {
+                document.body.style.cursor = 'default';
             }
-            renderDashboard();
         }
 
-        function renderDashboard() {
+        async function renderDashboard() {
             const list = document.getElementById('cat-list');
-            const cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
-            if (cats.length === 0) {
-                list.innerHTML = '<p style="color:#777;">ยังไม่มีประเภทการแข่งขัน กรุณาสร้างใหม่ด้านล่าง</p>';
-                return;
-            }
-            list.innerHTML = cats.map(c => `
-                <div class="cat-item">
-                    <span style="font-size: 18px; font-weight: bold;">${c}</span>
-                    <div>
-                        <button class="btn" style="background:#2e7d32;" onclick="loadCategory('${c}')">เปิดจัดการ</button>
-                        <button class="btn" style="background:#d32f2f;" onclick="deleteCategory('${c}')">ลบ</button>
+            list.innerHTML = '<p style="color:#777; text-align:center;">กำลังซิงค์ข้อมูลจาก Cloud...</p>';
+            
+            try {
+                let response = await fetch(`${CLOUD_API_URL}?action=getCategories`);
+                let cats = await response.json();
+                
+                if (!cats || cats.length === 0) {
+                    list.innerHTML = '<p style="color:#777; text-align:center;">ยังไม่มีประเภทการแข่งขัน กรุณาสร้างใหม่ด้านล่าง</p>';
+                    return;
+                }
+                
+                list.innerHTML = cats.map(c => `
+                    <div class="cat-item">
+                        <span style="font-size: 18px; font-weight: bold;">${c}</span>
+                        <div>
+                            <button class="btn" style="background:#2e7d32;" onclick="loadCategory('${c}')">เปิดจัดการ</button>
+                            <button class="btn" style="background:#d32f2f;" onclick="deleteCategory('${c}')">ลบ</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<p style="color:#d32f2f; text-align:center;">ไม่สามารถเชื่อมต่อข้อมูลกับ Cloud ได้</p>';
+            }
         }
 
-        function deleteCategory(name) {
-            if(confirm(`คุณแน่ใจหรือไม่ว่าจะลบประเภท "${name}" ? ข้อมูลทั้งหมดจะหายไป!`)) {
-                let cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
-                cats = cats.filter(c => c !== name);
-                localStorage.setItem('badminton_categories', JSON.stringify(cats));
-                
-                localStorage.removeItem(`badminton_${name}_setup`);
-                localStorage.removeItem(`badminton_${name}_state`);
-                localStorage.removeItem(`badminton_${name}_screen`);
-                renderDashboard();
+        async function deleteCategory(name) {
+            if(confirm(`คุณแน่ใจหรือไม่ว่าจะลบประเภท "${name}" ? ข้อมูลทั้งหมดบน Cloud จะหายไป!`)) {
+                document.body.style.cursor = 'wait';
+                try {
+                    await fetch(CLOUD_API_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ action: "deleteCategory", category: name })
+                    });
+                    setTimeout(renderDashboard, 1000);
+                } catch (err) {
+                    alert("เกิดข้อผิดพลาดในการลบข้อมูลบน Cloud");
+                } finally {
+                    document.body.style.cursor = 'default';
+                }
             }
         }
 
@@ -276,12 +305,70 @@
             renderDashboard();
         }
 
-        function loadCategory(name) {
+        async function loadCategory(name) {
             currentCategory = name;
             document.getElementById('dashboard-view').style.display = 'none';
             document.getElementById('category-view').style.display = 'block';
             document.getElementById('current-cat-title').innerText = "ประเภท: " + name;
-            loadSavedData();
+            
+            document.getElementById('tournament-category').value = name;
+            buildTeamInputs();
+            generateCourtInputs();
+            generateUmpireInputs();
+
+            document.body.style.cursor = 'wait';
+            try {
+                let response = await fetch(`${CLOUD_API_URL}?action=loadData&category=${encodeURIComponent(name)}`);
+                let res = await response.json();
+                
+                if (res.exists) {
+                    let data = res.setup;
+                    if (data) {
+                        document.getElementById('tournament-category').value = data.category || name;
+                        document.getElementById('num-courts').value = data.numCourts || 3;
+                        document.getElementById('num-umpires').value = data.numUmpires || 3;
+                        
+                        generateCourtInputs();
+                        for (let i = 0; i < (data.courts?.length || 0); i++) {
+                            let el = document.getElementById(`court-${i+1}`);
+                            if (el) el.value = data.courts[i];
+                        }
+                        
+                        generateUmpireInputs();
+                        for (let i = 0; i < (data.umpires?.length || 0); i++) {
+                            let el = document.getElementById(`umpire-${i+1}`);
+                            if (el) el.value = data.umpires[i];
+                        }
+
+                        for (let i = 0; i < (data.teams?.length || 0); i++) {
+                            let el = document.getElementById(`team-${i+1}`);
+                            if (el) el.value = data.teams[i];
+                        }
+                    }
+
+                    bracketState = res.state || {};
+                    if (Object.keys(bracketState).length > 0) {
+                        document.getElementById('btn-resume').style.display = 'block';
+                    } else {
+                        document.getElementById('btn-resume').style.display = 'none';
+                    }
+
+                    if (res.screen === 'bracket' && Object.keys(bracketState).length > 0) {
+                        resumeBracket();
+                    } else {
+                        resetApp();
+                    }
+                } else {
+                    bracketState = {};
+                    document.getElementById('btn-resume').style.display = 'none';
+                    resetApp();
+                }
+            } catch (err) {
+                console.error("Load data error:", err);
+                alert("ไม่สามารถโหลดข้อมูลจาก Cloud ได้ โปรดตรวจสอบอินเทอร์เน็ต");
+            } finally {
+                document.body.style.cursor = 'default';
+            }
         }
 
         function generateCourtInputs() {
@@ -329,7 +416,7 @@
             }
         }
 
-        function autoSave() {
+        async function autoSave() {
             if (!currentCategory) return;
             const setupData = {
                 category: document.getElementById('tournament-category').value,
@@ -353,9 +440,26 @@
                 if (el) setupData.teams.push(el.value);
             }
             
-            localStorage.setItem(`badminton_${currentCategory}_setup`, JSON.stringify(setupData));
-            localStorage.setItem(`badminton_${currentCategory}_state`, JSON.stringify(bracketState));
-            localStorage.setItem(`badminton_${currentCategory}_screen`, document.getElementById('main-setup-container').style.display === 'none' ? 'bracket' : 'setup');
+            let screenState = document.getElementById('main-setup-container').style.display === 'none' ? 'bracket' : 'setup';
+
+            let payload = {
+                action: "saveData",
+                category: currentCategory,
+                setup: setupData,
+                state: bracketState,
+                screen: screenState
+            };
+
+            try {
+                await fetch(CLOUD_API_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Auto-save error:", err);
+            }
         }
 
         window.autoSaveUmpire = function(mId) {
@@ -366,67 +470,10 @@
             }
         };
 
-        function loadSavedData() {
-            document.getElementById('tournament-category').value = currentCategory;
-            document.getElementById('num-courts').value = 3; 
-            document.getElementById('num-umpires').value = 3; 
-            
-            buildTeamInputs();
-            generateCourtInputs();
-            generateUmpireInputs();
-
-            let savedSetup = localStorage.getItem(`badminton_${currentCategory}_setup`);
-            if (savedSetup) {
-                let data = JSON.parse(savedSetup);
-                document.getElementById('tournament-category').value = data.category || currentCategory;
-                document.getElementById('num-courts').value = data.numCourts || 3;
-                document.getElementById('num-umpires').value = data.numUmpires || 3;
-                
-                generateCourtInputs();
-                for (let i = 0; i < data.courts.length; i++) {
-                    let el = document.getElementById(`court-${i+1}`);
-                    if (el) el.value = data.courts[i];
-                }
-                
-                generateUmpireInputs();
-                for (let i = 0; i < (data.umpires?.length || 0); i++) {
-                    let el = document.getElementById(`umpire-${i+1}`);
-                    if (el) el.value = data.umpires[i];
-                }
-
-                for (let i = 0; i < data.teams.length; i++) {
-                    let el = document.getElementById(`team-${i+1}`);
-                    if (el) el.value = data.teams[i];
-                }
-            }
-
-            let savedState = localStorage.getItem(`badminton_${currentCategory}_state`);
-            if (savedState) {
-                bracketState = JSON.parse(savedState);
-                if (Object.keys(bracketState).length > 0) {
-                    document.getElementById('btn-resume').style.display = 'block';
-                } else {
-                    document.getElementById('btn-resume').style.display = 'none';
-                }
-            } else {
-                bracketState = {};
-                document.getElementById('btn-resume').style.display = 'none';
-            }
-
-            let savedScreen = localStorage.getItem(`badminton_${currentCategory}_screen`);
-            if (savedScreen === 'bracket' && Object.keys(bracketState).length > 0) {
-                resumeBracket();
-            } else {
-                resetApp();
-            }
-        }
-
         function clearCurrentCategoryData() {
             if(confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูล "ทั้งหมด" ของประเภทนี้?')) {
-                localStorage.removeItem(`badminton_${currentCategory}_setup`);
-                localStorage.removeItem(`badminton_${currentCategory}_state`);
-                localStorage.removeItem(`badminton_${currentCategory}_screen`);
-                loadSavedData();
+                bracketState = {};
+                autoSave().then(() => loadCategory(currentCategory));
             }
         }
 
@@ -524,13 +571,13 @@
             
             renderBracket();
             drawLines();
-            localStorage.setItem(`badminton_${currentCategory}_screen`, 'bracket');
+            autoSave();
         }
 
         function resetApp() {
             document.getElementById('main-setup-container').style.display = 'block';
             document.getElementById('bracket-screen').style.display = 'none';
-            localStorage.setItem(`badminton_${currentCategory}_screen`, 'setup');
+            autoSave();
         }
 
         function processByes() {
@@ -900,7 +947,7 @@
                     const imgData = canvas.toDataURL('image/jpeg', 0.90);
                     
                     const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('l', 'mm', 'a4'); // A4 Landscape
+                    const pdf = new jsPDF('l', 'mm', 'a4');
                     const pageWidth = pdf.internal.pageSize.getWidth();
                     const pageHeight = pdf.internal.pageSize.getHeight();
                     
@@ -930,24 +977,26 @@
         }
 
         async function exportAllToPDF() {
-            let cats = JSON.parse(localStorage.getItem('badminton_categories') || '[]');
-            if (cats.length === 0) {
-                alert("ยังไม่มีประเภทการแข่งขันในระบบ");
-                return;
-            }
-
-            let prevCategory = currentCategory;
-            let wasDashboard = document.getElementById('dashboard-view').style.display !== 'none';
-
+            document.body.style.cursor = 'wait';
             try {
-                document.body.style.cursor = 'wait';
+                let response = await fetch(`${CLOUD_API_URL}?action=getCategories`);
+                let cats = await response.json();
+                if (!cats || cats.length === 0) {
+                    alert("ยังไม่มีประเภทการแข่งขันในระบบ");
+                    document.body.style.cursor = 'default';
+                    return;
+                }
+
+                let prevCategory = currentCategory;
+                let wasDashboard = document.getElementById('dashboard-view').style.display !== 'none';
+
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('l', 'mm', 'a4'); 
                 let isFirstPage = true;
 
                 for (let i = 0; i < cats.length; i++) {
                     let catName = cats[i];
-                    loadCategory(catName);
+                    await loadCategory(catName);
 
                     document.getElementById('main-setup-container').style.display = 'block';
                     document.getElementById('bracket-screen').style.display = 'none';
@@ -998,17 +1047,17 @@
                 }
 
                 pdf.save(`All_Tournaments_Report.pdf`);
-                
-            } catch (err) {
-                console.error(err);
-                alert("เกิดข้อผิดพลาดในการ Export: " + err);
-            } finally {
-                document.body.style.cursor = 'default';
+
                 if (wasDashboard) {
                     backToDashboard();
                 } else if (prevCategory) {
                     loadCategory(prevCategory);
                 }
+            } catch (err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาดในการ Export ทั้งหมด: " + err);
+            } finally {
+                document.body.style.cursor = 'default';
             }
         }
 
