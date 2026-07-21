@@ -23,7 +23,7 @@
             box-sizing: inherit;
         }
 
-        /* ซ่อนปุ่มลูกศรเพิ่ม/ลด (+/-) ของ input number ในทุก Browser */
+        /* ซ่อนปุ่มลูกศรเพิ่ม/ลด (+/-) ของ input number */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -57,12 +57,14 @@
         .header-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px auto; }
         .header-buttons button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 13px; }
         
-        .bracket-wrapper { position: relative; width: 1650px; height: 1650px; margin: 0 auto; }
+        /* ขยายพื้นที่ความกว้างและความสูงรวมเพื่อให้มีช่องไฟระหว่างกล่องสบายตา ไม่เบียดกัน */
+        .bracket-wrapper { position: relative; width: 1850px; height: 1850px; margin: 0 auto; }
         
-        .match-box { position: absolute; width: 250px; height: 120px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 6px; }
-        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -6px -6px 6px -6px; border-radius: 4px 4px 0 0; padding: 4px 8px; font-size: 11px; font-weight: bold; }
+        /* ขนาดกล่องแมตช์พอดี พร้อมเว้นช่องไฟภายในสวยงาม */
+        .match-box { position: absolute; width: 220px; height: 115px; border: 2px solid #1f4e79; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 2; padding: 5px; }
+        .match-header { display: flex; justify-content: space-between; align-items: center; background: #1f4e79; color: white; margin: -5px -5px 5px -5px; border-radius: 4px 4px 0 0; padding: 3px 6px; font-size: 11px; font-weight: bold; }
         
-        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 65px; text-align: right; margin-right: 5px; }
+        .umpire-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid transparent; border-radius: 3px; padding: 2px 4px; font-size: 10px; width: 55px; text-align: right; margin-right: 5px; }
         .umpire-input::placeholder { color: #ddd; }
         .umpire-input:focus { background: #fff; color: #333; outline: none; }
         
@@ -71,15 +73,16 @@
         
         .team-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: bold; padding-right: 4px; }
         
-        .score-input { width: 48px; height: 26px; margin-left: 3px; text-align: center; border: 1px solid #777; border-radius: 4px; font-size: 14px; font-weight: bold; background-color: #fff; color: #000; }
+        /* ช่องกรอกคะแนนขนาดพอเหมาะ พิมพ์ตัวเลขได้เท่านั้น ไม่มีปุ่มลูกศร */
+        .score-input { width: 36px; height: 24px; margin-left: 3px; text-align: center; border: 1px solid #777; border-radius: 3px; font-size: 13px; font-weight: bold; background-color: #fff; color: #000; }
         .score-input:focus { border-color: #1f4e79; outline: none; background-color: #eef3f9; }
         .score-input:disabled { background-color: #e0e0e0; color: #888; cursor: not-allowed; border-color: #ccc; }
         .tie-breaker-input { border: 2px solid #ff9800; background-color: #fff3e0; color: #d32f2f; }
         
-        .confirm-btn { margin-top: auto; font-size: 12px; padding: 5px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .confirm-btn { margin-top: auto; font-size: 11px; padding: 4px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .confirm-btn:hover { background: #45a049; }
-        .status-text { margin-top: auto; font-size: 12px; text-align: center; color: #d32f2f; font-weight: bold; }
-        .edit-btn { background: #ff9800; color: white; border: none; border-radius: 3px; font-size: 10px; padding: 3px 6px; cursor: pointer; margin-top: auto; }
+        .status-text { margin-top: auto; font-size: 11px; text-align: center; color: #d32f2f; font-weight: bold; }
+        .edit-btn { background: #ff9800; color: white; border: none; border-radius: 3px; font-size: 10px; padding: 2px 5px; cursor: pointer; margin-top: auto; }
         #lines-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
         .bracket-title { position: absolute; font-size: 22px; font-weight: bold; color: #1f4e79; z-index: 2; }
     </style>
@@ -160,10 +163,10 @@
             </div>
             
             <div id="bracket-scroll-container" style="width: 100%; overflow-x: auto; position: relative;">
-                <div id="export-target" style="background-color: #FFFFFF; padding: 25px; min-width: 1700px; box-sizing: border-box;">
+                <div id="export-target" style="background-color: #FFFFFF; padding: 25px; min-width: 1850px; box-sizing: border-box;">
                     
                     <!-- Banner -->
-                    <div style="width: 95%; max-width: 1500px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="width: 95%; max-width: 1650px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                         <img src="Gemini_Generated_Image_77lnd577lnd577ln.png" alt="Tournament Banner" style="width: 100%; display: block; object-fit: cover; max-height: 280px;" onerror="this.parentElement.style.display='none'">
                     </div>
                     
@@ -186,19 +189,20 @@
         const totalTeams = 16;
         let bracketState = {};
         
+        // พิกัดตำแหน่งกล่องแข่งขันที่เว้นระยะห่างช่องไฟอย่างสวยงามและสมดุล (Upper & Lower Bracket)
         const matchData = {
-            1:  { x: 16, y: 20 },    2:  { x: 16, y: 150 },   3:  { x: 16, y: 280 },   4:  { x: 16, y: 410 },
-            5:  { x: 16, y: 540 },   6:  { x: 16, y: 670 },   7:  { x: 16, y: 800 },   8:  { x: 16, y: 930 },
-            13: { x: 290, y: 85 },   14: { x: 290, y: 345 },  15: { x: 290, y: 605 },  16: { x: 290, y: 865 },
-            23: { x: 760, y: 215 },  24: { x: 760, y: 735 },
-            28: { x: 1230, y: 475 },
-            9:  { x: 16, y: 1180 },  10: { x: 16, y: 1310 },  11: { x: 16, y: 1440 },  12: { x: 16, y: 1570 },
-            17: { x: 290, y: 1180 }, 18: { x: 290, y: 1310 }, 19: { x: 290, y: 1440 }, 20: { x: 290, y: 1570 },
-            21: { x: 520, y: 1245 }, 22: { x: 520, y: 1505 },
-            25: { x: 760, y: 1245 }, 26: { x: 760, y: 1505 },
-            27: { x: 990, y: 1375 },
-            29: { x: 1230, y: 1375 },
-            'Final': { x: 1460, y: 875 }
+            1:  { x: 20, y: 20 },    2:  { x: 20, y: 160 },   3:  { x: 20, y: 300 },   4:  { x: 20, y: 440 },
+            5:  { x: 20, y: 580 },   6:  { x: 20, y: 720 },   7:  { x: 20, y: 860 },   8:  { x: 20, y: 1000 },
+            13: { x: 300, y: 90 },   14: { x: 300, y: 370 },  15: { x: 300, y: 650 },  16: { x: 300, y: 930 },
+            23: { x: 800, y: 230 },  24: { x: 800, y: 790 },
+            28: { x: 1300, y: 510 },
+            9:  { x: 20, y: 1280 },  10: { x: 20, y: 1420 },  11: { x: 20, y: 1560 },  12: { x: 20, y: 1700 },
+            17: { x: 300, y: 1280 }, 18: { x: 300, y: 1420 }, 19: { x: 300, y: 1560 }, 20: { x: 300, y: 1700 },
+            21: { x: 550, y: 1350 }, 22: { x: 550, y: 1630 },
+            25: { x: 800, y: 1350 }, 26: { x: 800, y: 1630 },
+            27: { x: 1050, y: 1490 },
+            29: { x: 1300, y: 1490 },
+            'Final': { x: 1550, y: 875 }
         };
 
         const graph = {
@@ -709,8 +713,8 @@
             const container = document.getElementById('matches-container');
             let html = '';
 
-            html += '<div class="bracket-title" style="left:16px; top: -10px;">Upper Bracket (สายบน)</div>';
-            html += '<div class="bracket-title" style="left:16px; top: 1150px;">Lower Bracket (สายล่าง)</div>';
+            html += '<div class="bracket-title" style="left:20px; top: -10px;">Upper Bracket (สายบน)</div>';
+            html += '<div class="bracket-title" style="left:20px; top: 1200px;">Lower Bracket (สายล่าง)</div>';
 
             for (let key in matchData) {
                 let d = matchData[key];
@@ -789,8 +793,8 @@
         function drawLines() {
             const svg = document.getElementById('lines-svg');
             let svgHtml = '';
-            const boxW = 250; 
-            const halfH = 60; 
+            const boxW = 220; 
+            const halfH = 57; 
             
             function drawPath(x1, y1, x2, y2) {
                 const midX = x1 + (x2 - x1) / 2;
@@ -810,7 +814,7 @@
                 if (nw) {
                     let target = matchData[nw.id];
                     let endX = target.x;
-                    let endY = target.y + (nw.slot === 't1' ? 40 : 80);
+                    let endY = target.y + (nw.slot === 't1' ? 38 : 76);
                     svgHtml += drawPath(startX, startY, endX, endY);
                 }
 
@@ -818,7 +822,7 @@
                 if (nl) {
                     let target = matchData[nl.id];
                     let endX = target.x;
-                    let endY = target.y + (nl.slot === 't1' ? 40 : 80);
+                    let endY = target.y + (nl.slot === 't1' ? 38 : 76);
                     
                     let isVerticalDropToFirstLoserRound = (parseInt(key) >= 1 && parseInt(key) <= 8);
                     
